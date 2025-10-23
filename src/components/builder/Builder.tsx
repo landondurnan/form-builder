@@ -141,7 +141,7 @@ export function Builder() {
       </div>
 
       {/* Add Field Form */}
-      <div className="bg-sidebar h-screen p-2">
+      <div className="bg-sidebar h-screen">
         <AddFieldForm onAddField={handleAddField} />
       </div>
     </div>
