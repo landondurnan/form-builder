@@ -9,13 +9,38 @@ import {
 } from "../ui/field";
 import { Input } from "../ui/input";
 import { Toggle } from "../ui/toggle";
-import { AsteriskIcon } from "lucide-react";
-import { VALIDATION_CONFIG } from "../../lib/formUtils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import {
+  AsteriskIcon,
+  Mail,
+  Globe,
+  Phone,
+  MapPin,
+  CreditCard,
+  Regex,
+} from "lucide-react";
+import { VALIDATION_CONFIG, PATTERN_DEFINITIONS } from "../../lib/formUtils";
 import type { FormType, FieldState } from "./types";
 
 interface AddFieldValidationProps {
   form: FormType;
 }
+
+// Icon mapping for pattern types
+const PATTERN_ICONS: Record<string, React.ReactNode> = {
+  email: <Mail className="size-4" />,
+  url: <Globe className="size-4" />,
+  phone: <Phone className="size-4" />,
+  postal: <MapPin className="size-4" />,
+  creditCard: <CreditCard className="size-4" />,
+  custom: <Regex className="size-4" />,
+};
 
 function ValidationInput({
   fieldType,
@@ -44,7 +69,7 @@ function ValidationInput({
 export function AddFieldValidation({ form }: AddFieldValidationProps) {
   return (
     <>
-      <FieldSeparator className="my-2" />
+      <FieldSeparator className="my-1" />
       <FieldSet>
         <FieldLegend>Validation</FieldLegend>
         <form.Field name="required">
@@ -96,6 +121,85 @@ export function AddFieldValidation({ form }: AddFieldValidationProps) {
                   </form.Field>
                 ))}
               </div>
+            ) : null;
+          }}
+        </form.Field>
+
+        {/* Pattern Validation for Text Fields */}
+        <form.Field name="type">
+          {(typeField: FieldState) => {
+            const fieldType = typeField.state.value as FieldType;
+            const config = VALIDATION_CONFIG[fieldType];
+
+            return config.showPattern ? (
+              <form.Field name="validation.pattern">
+                {(patternField: FieldState) => {
+                  const selectedPattern = patternField.state.value as string;
+
+                  return (
+                    <div className="space-y-2">
+                      <Field>
+                        <FieldContent>
+                          <FieldLabel htmlFor={patternField.name}>
+                            Pattern Validation
+                          </FieldLabel>
+                        </FieldContent>
+                        <Select
+                          value={selectedPattern ?? ""}
+                          onValueChange={(value) =>
+                            patternField.handleChange(value)
+                          }
+                        >
+                          <SelectTrigger id={patternField.name}>
+                            <SelectValue placeholder="Select a validation pattern..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(PATTERN_DEFINITIONS).map(
+                              ([key, def]) => (
+                                <SelectItem key={key} value={key}>
+                                  <div className="flex items-center gap-2">
+                                    {PATTERN_ICONS[key]}
+                                    {def.label}
+                                  </div>
+                                </SelectItem>
+                              )
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </Field>
+
+                      {/* Custom Pattern Input */}
+                      {selectedPattern === "custom" && (
+                        <form.Field name="validation.customPattern">
+                          {(customPatternField: FieldState) => {
+                            return (
+                              <Field>
+                                <FieldContent>
+                                  <FieldLabel htmlFor={customPatternField.name}>
+                                    Regular Expression
+                                  </FieldLabel>
+                                </FieldContent>
+                                <Input
+                                  id={customPatternField.name}
+                                  placeholder="e.g., ^[a-z]+$"
+                                  value={
+                                    customPatternField.state.value as string
+                                  }
+                                  onChange={(e) =>
+                                    customPatternField.handleChange(
+                                      e.target.value
+                                    )
+                                  }
+                                />
+                              </Field>
+                            );
+                          }}
+                        </form.Field>
+                      )}
+                    </div>
+                  );
+                }}
+              </form.Field>
             ) : null;
           }}
         </form.Field>

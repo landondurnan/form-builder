@@ -10,12 +10,23 @@ export type FieldType =
   | "checkbox"
   | "date";
 
+// Pattern types for Zod schema validation
+export type PatternType =
+  | "email"
+  | "url"
+  | "phone"
+  | "postal"
+  | "creditCard"
+  | "custom";
+
 // Validation rules for different field types
 export interface ValidationRules {
   minLength?: number; // For text, textarea
   maxLength?: number; // For text, textarea
   min?: number; // For number, date (as timestamp)
   max?: number; // For number, date (as timestamp)
+  pattern?: PatternType; // For text fields with pattern validation
+  customPattern?: string; // For custom regex patterns
 }
 
 // Form field definition
