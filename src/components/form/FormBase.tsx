@@ -14,6 +14,7 @@ export type FormControlProps = {
   placeholder?: string;
   type?: string;
   value?: string | number | boolean;
+  options?: { label: string; value: string }[];
 };
 
 type FormBaseProps = FormControlProps & {

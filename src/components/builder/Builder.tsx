@@ -15,7 +15,7 @@ const FIELD_TYPE_COMPONENT_MAP = {
   date: "Input",
   textarea: "Textarea",
   select: "Select",
-  radio: "Select",
+  radio: "Radio",
   checkbox: "Checkbox",
 } as const;
 
@@ -45,6 +45,57 @@ export function Builder() {
     },
     [form]
   );
+
+  const buildFieldProps = (formField: FormField) => {
+    const isInputType = INPUT_TYPES.includes(formField.type);
+
+    const baseProps = {
+      label: formField.label,
+      ...(formField.placeholder && {
+        placeholder: formField.placeholder,
+      }),
+      ...(formField.description && {
+        description: formField.description,
+      }),
+    };
+
+    if (isInputType) {
+      return { ...baseProps, type: formField.type };
+    }
+
+    // FormRadio expects options prop
+    if (formField.type === "radio" && formField.options) {
+      return {
+        ...baseProps,
+        options: formField.options.map((opt) => ({
+          value: opt,
+          label: opt,
+        })),
+      };
+    }
+
+    // FormCheckbox expects options prop when multiple checkboxes
+    if (formField.type === "checkbox" && formField.options) {
+      return {
+        ...baseProps,
+        options: formField.options.map((opt) => ({
+          value: opt,
+          label: opt,
+        })),
+      };
+    }
+
+    return baseProps;
+  };
+
+  const renderSelectOptions = (options: string[] | undefined) => {
+    if (!options) return null;
+    return options.map((option) => (
+      <SelectItem key={option} value={option}>
+        {option}
+      </SelectItem>
+    ));
+  };
 
   return (
     <div className="flex gap-4">
@@ -83,32 +134,12 @@ export function Builder() {
                       const FieldComponent = (
                         arrayField as unknown as Record<
                           string,
-                          React.ComponentType<{
-                            label: string;
-                            placeholder?: string;
-                            type?: string;
-                            value: string | number | boolean | undefined;
-                            children?: React.ReactNode;
-                          }>
+                          React.ComponentType<Record<string, unknown>>
                         >
                       )[componentName];
                       if (!FieldComponent) return null;
 
-                      const isInputType = INPUT_TYPES.includes(formField.type);
-                      const needsOptions =
-                        formField.type === "select" ||
-                        formField.type === "radio";
-
-                      const fieldProps = {
-                        label: formField.label,
-                        ...(formField.placeholder && {
-                          placeholder: formField.placeholder,
-                        }),
-                        ...(formField.description && {
-                          description: formField.description,
-                        }),
-                        ...(isInputType && { type: formField.type }),
-                      };
+                      const fieldProps = buildFieldProps(formField);
 
                       return (
                         <form.AppField
@@ -120,12 +151,8 @@ export function Builder() {
                               {...fieldProps}
                               value={subField.state.value}
                             >
-                              {needsOptions &&
-                                formField.options?.map((option) => (
-                                  <SelectItem key={option} value={option}>
-                                    {option}
-                                  </SelectItem>
-                                ))}
+                              {formField.type === "select" &&
+                                renderSelectOptions(formField.options)}
                             </FieldComponent>
                           )}
                         </form.AppField>
@@ -141,7 +168,7 @@ export function Builder() {
       </div>
 
       {/* Add Field Form */}
-      <div className="bg-sidebar h-screen">
+      <div className="bg-sidebar">
         <AddFieldForm onAddField={handleAddField} />
       </div>
     </div>

@@ -1,10 +1,19 @@
 import { z } from "zod";
 import type { FormField, FieldType } from "../../lib/types";
 import { useAppForm } from "../form/hooks";
-import { Field, FieldContent, FieldError, FieldLabel } from "../ui/field";
+import {
+  Field,
+  FieldContent,
+  FieldError,
+  FieldLabel,
+  FieldLegend,
+  FieldSeparator,
+  FieldSet,
+} from "../ui/field";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Checkbox } from "../ui/checkbox";
+import { Textarea } from "../ui/textarea";
 import {
   Select,
   SelectContent,
@@ -12,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { Asterisk } from "lucide-react";
 
 interface AddFieldFormProps {
   onAddField: (field: FormField) => void;
@@ -36,6 +46,7 @@ const addFieldSchema = z.object({
   description: z.string().optional().default(""),
   required: z.boolean().default(false),
   defaultValue: z.string().optional().default(""),
+  options: z.string().optional().default(""),
 });
 
 // Utility functions
@@ -51,6 +62,17 @@ const labelToFieldName = (label: string) =>
 
 const getDefaultValue = (type: FieldType) => (type === "checkbox" ? false : "");
 
+const parseOptionsFromTextarea = (input: string): string[] => {
+  return input
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+};
+
+const shouldShowOptionsField = (type: FieldType): boolean => {
+  return ["select", "checkbox", "radio"].includes(type);
+};
+
 export function AddFieldForm({ onAddField }: AddFieldFormProps) {
   const form = useAppForm({
     defaultValues: {
@@ -60,6 +82,7 @@ export function AddFieldForm({ onAddField }: AddFieldFormProps) {
       description: "",
       required: false,
       defaultValue: "",
+      options: "Option 1\nOption 2",
     },
     onSubmit: async (formData) => {
       const validated = addFieldSchema.safeParse(formData.value);
@@ -82,6 +105,10 @@ export function AddFieldForm({ onAddField }: AddFieldFormProps) {
         ...(validated.data.description && {
           description: validated.data.description,
         }),
+        ...(validated.data.options &&
+          shouldShowOptionsField(validated.data.type as FieldType) && {
+            options: parseOptionsFromTextarea(validated.data.options),
+          }),
       };
 
       onAddField(newField);
@@ -95,7 +122,7 @@ export function AddFieldForm({ onAddField }: AddFieldFormProps) {
         e.preventDefault();
         form.handleSubmit();
       }}
-      className="min-w-md mb-4 p-4 space-y-4"
+      className="min-w-md mb-4 p-6 space-y-4"
     >
       <h3 className="font-medium">Add New Field</h3>
 
@@ -118,7 +145,9 @@ export function AddFieldForm({ onAddField }: AddFieldFormProps) {
             field.state.meta.isTouched && !field.state.meta.isValid;
           return (
             <Field data-invalid={isInvalid}>
-              <FieldLabel htmlFor={field.name}>Label</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                Label <Asterisk className="size-4" />
+              </FieldLabel>
               <Input
                 id={field.name}
                 type="text"
@@ -160,75 +189,103 @@ export function AddFieldForm({ onAddField }: AddFieldFormProps) {
         )}
       </form.Field>
 
+      <form.Field name="type">
+        {(typeField) =>
+          shouldShowOptionsField(typeField.state.value as FieldType) ? (
+            <form.Field name="options">
+              {(field) => (
+                <Field>
+                  <FieldContent>
+                    <FieldLabel htmlFor={field.name}>
+                      Options <Asterisk className="size-4" />
+                    </FieldLabel>
+                  </FieldContent>
+                  <Textarea
+                    id={field.name}
+                    placeholder="Enter one option per line"
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    className="min-h-24"
+                  />
+                </Field>
+              )}
+            </form.Field>
+          ) : null
+        }
+      </form.Field>
+
       {/* Optional Field Properties */}
-
-      <form.Field name="placeholder">
-        {(field) => (
-          <Field>
-            <FieldContent>
-              <FieldLabel htmlFor={field.name}>Placeholder</FieldLabel>
-            </FieldContent>
-            <Input
-              id={field.name}
-              type="text"
-              placeholder="e.g., Enter your name"
-              value={field.state.value}
-              onChange={(e) => field.handleChange(e.target.value)}
-            />
-          </Field>
-        )}
-      </form.Field>
-
-      <form.Field name="defaultValue">
-        {(field) => (
-          <Field>
-            <FieldContent>
-              <FieldLabel htmlFor={field.name}>Default Value</FieldLabel>
-            </FieldContent>
-            <Input
-              id={field.name}
-              type="text"
-              placeholder="e.g., Default text"
-              value={field.state.value}
-              onChange={(e) => field.handleChange(e.target.value)}
-            />
-          </Field>
-        )}
-      </form.Field>
-
-      {/* Help Text and Required */}
-
-      <form.Field name="description">
-        {(field) => (
-          <Field>
-            <FieldContent>
-              <FieldLabel htmlFor={field.name}>Help Text</FieldLabel>
-            </FieldContent>
-            <Input
-              id={field.name}
-              type="text"
-              placeholder="e.g., This field is required"
-              value={field.state.value}
-              onChange={(e) => field.handleChange(e.target.value)}
-            />
-          </Field>
-        )}
-      </form.Field>
-
-      <form.Field name="required">
-        {(field) => (
-          <Field>
-            <div className="flex items-center gap-2">
-              <Checkbox
+      <FieldSeparator className="my-2" />
+      <FieldSet>
+        <FieldLegend>Optional Properties</FieldLegend>
+        <form.Field name="placeholder">
+          {(field) => (
+            <Field>
+              <FieldContent>
+                <FieldLabel htmlFor={field.name}>Placeholder</FieldLabel>
+              </FieldContent>
+              <Input
                 id={field.name}
-                checked={field.state.value}
-                onCheckedChange={(checked) => field.handleChange(!!checked)}
+                type="text"
+                placeholder="e.g., Enter your name"
+                value={field.state.value}
+                onChange={(e) => field.handleChange(e.target.value)}
               />
-              <FieldLabel htmlFor={field.name}>Required</FieldLabel>
-            </div>
-          </Field>
-        )}
-      </form.Field>
+            </Field>
+          )}
+        </form.Field>
+
+        <form.Field name="defaultValue">
+          {(field) => (
+            <Field>
+              <FieldContent>
+                <FieldLabel htmlFor={field.name}>Default Value</FieldLabel>
+              </FieldContent>
+              <Input
+                id={field.name}
+                type="text"
+                placeholder="e.g., Default text"
+                value={field.state.value}
+                onChange={(e) => field.handleChange(e.target.value)}
+              />
+            </Field>
+          )}
+        </form.Field>
+
+        {/* Help Text and Required */}
+
+        <form.Field name="description">
+          {(field) => (
+            <Field>
+              <FieldContent>
+                <FieldLabel htmlFor={field.name}>Help Text</FieldLabel>
+              </FieldContent>
+              <Input
+                id={field.name}
+                type="text"
+                placeholder="e.g., Choose a unique username"
+                value={field.state.value}
+                onChange={(e) => field.handleChange(e.target.value)}
+              />
+            </Field>
+          )}
+        </form.Field>
+
+        <form.Field name="required">
+          {(field) => (
+            <Field>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id={field.name}
+                  checked={field.state.value}
+                  onCheckedChange={(checked) => field.handleChange(!!checked)}
+                />
+                <FieldLabel htmlFor={field.name}>Required</FieldLabel>
+              </div>
+            </Field>
+          )}
+        </form.Field>
+      </FieldSet>
 
       <Button type="submit" className="w-full">
         Add Field
