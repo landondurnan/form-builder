@@ -11,6 +11,9 @@ import {
 export type FormControlProps = {
   label: string;
   description?: string;
+  placeholder?: string;
+  type?: string;
+  value?: string | number | boolean;
 };
 
 type FormBaseProps = FormControlProps & {

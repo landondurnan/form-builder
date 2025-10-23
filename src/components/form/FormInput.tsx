@@ -1,5 +1,6 @@
 import { Input } from "../ui/input";
-import { FormBase, type FormControlProps } from "./FormBase";
+import { FormBase } from "./FormBase";
+import type { FormControlProps } from "./FormBase";
 import { useFieldContext } from "./hooks";
 
 export function FormInput(props: FormControlProps) {
@@ -10,11 +11,13 @@ export function FormInput(props: FormControlProps) {
     <FormBase {...props}>
       <Input
         id={field.name}
+        type={props.type || "text"}
         name={field.name}
         value={field.state.value}
         onBlur={field.handleBlur}
         onChange={(e) => field.handleChange(e.target.value)}
         aria-invalid={isInvalid}
+        placeholder={props.placeholder}
       />
     </FormBase>
   );
