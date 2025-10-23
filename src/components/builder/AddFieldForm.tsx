@@ -12,7 +12,6 @@ import {
 } from "../ui/field";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { Checkbox } from "../ui/checkbox";
 import { Textarea } from "../ui/textarea";
 import {
   Select,
@@ -21,7 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { Asterisk } from "lucide-react";
+import { Asterisk, AsteriskIcon } from "lucide-react";
+import { Toggle } from "../ui/toggle";
 
 interface AddFieldFormProps {
   onAddField: (field: FormField) => void;
@@ -47,6 +47,14 @@ const addFieldSchema = z.object({
   required: z.boolean().default(false),
   defaultValue: z.string().optional().default(""),
   options: z.string().optional().default(""),
+  validation: z
+    .object({
+      minLength: z.coerce.number().min(0).optional().or(z.literal("")),
+      maxLength: z.coerce.number().min(0).optional().or(z.literal("")),
+      min: z.coerce.number().optional().or(z.literal("")),
+      max: z.coerce.number().optional().or(z.literal("")),
+    })
+    .optional(),
 });
 
 // Utility functions
@@ -86,6 +94,77 @@ const DEFAULT_VALUE_INPUT_TYPES: Partial<Record<FieldType, string>> = {
   date: "date",
 };
 
+// Validation configuration per field type
+const VALIDATION_CONFIG: Record<
+  FieldType,
+  {
+    showValidation: boolean;
+    inputType: "number" | "date";
+    labels: { min: string; max: string };
+  }
+> = {
+  text: {
+    showValidation: true,
+    inputType: "number",
+    labels: { min: "Min Length", max: "Max Length" },
+  },
+  textarea: {
+    showValidation: true,
+    inputType: "number",
+    labels: { min: "Min Length", max: "Max Length" },
+  },
+  number: {
+    showValidation: true,
+    inputType: "number",
+    labels: { min: "Min Value", max: "Max Value" },
+  },
+  date: {
+    showValidation: true,
+    inputType: "date",
+    labels: { min: "Min Date", max: "Max Date" },
+  },
+  select: {
+    showValidation: false,
+    inputType: "number",
+    labels: { min: "", max: "" },
+  },
+  radio: {
+    showValidation: false,
+    inputType: "number",
+    labels: { min: "", max: "" },
+  },
+  checkbox: {
+    showValidation: false,
+    inputType: "number",
+    labels: { min: "", max: "" },
+  },
+};
+
+// Validation input component
+function ValidationInput({
+  fieldType,
+  minOrMax,
+  value,
+  onChange,
+}: {
+  fieldType: FieldType;
+  minOrMax: "min" | "max";
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const config = VALIDATION_CONFIG[fieldType];
+  const placeholder = minOrMax === "min" ? "e.g., 5" : "e.g., 100";
+
+  return (
+    <Input
+      type={config.inputType}
+      placeholder={placeholder}
+      value={value ?? ""}
+      onChange={(e) => onChange(e.target.value === "" ? "" : e.target.value)}
+    />
+  );
+}
+
 export function AddFieldForm({ onAddField }: AddFieldFormProps) {
   const form = useAppForm({
     defaultValues: {
@@ -96,11 +175,32 @@ export function AddFieldForm({ onAddField }: AddFieldFormProps) {
       required: false,
       defaultValue: "",
       options: "Option 1\nOption 2",
+      validation: {
+        minLength: "",
+        maxLength: "",
+        min: "",
+        max: "",
+      },
     },
     onSubmit: async (formData) => {
       const validated = addFieldSchema.safeParse(formData.value);
       if (!validated.success) {
         return;
+      }
+
+      // Build validation object, only including non-empty values
+      const validationRules: Record<string, number> = {};
+      if (validated.data.validation?.minLength) {
+        validationRules.minLength = validated.data.validation.minLength;
+      }
+      if (validated.data.validation?.maxLength) {
+        validationRules.maxLength = validated.data.validation.maxLength;
+      }
+      if (validated.data.validation?.min) {
+        validationRules.min = validated.data.validation.min;
+      }
+      if (validated.data.validation?.max) {
+        validationRules.max = validated.data.validation.max;
       }
 
       const newField: FormField = {
@@ -122,6 +222,9 @@ export function AddFieldForm({ onAddField }: AddFieldFormProps) {
           shouldShowOptionsField(validated.data.type as FieldType) && {
             options: parseOptionsFromTextarea(validated.data.options),
           }),
+        ...(Object.keys(validationRules).length > 0 && {
+          validation: validationRules,
+        }),
       };
 
       onAddField(newField);
@@ -326,20 +429,59 @@ export function AddFieldForm({ onAddField }: AddFieldFormProps) {
             </Field>
           )}
         </form.Field>
+      </FieldSet>
 
+      <FieldSeparator className="my-2" />
+
+      <FieldSet>
+        <FieldLegend>Validation</FieldLegend>
         <form.Field name="required">
           {(field) => (
             <Field>
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id={field.name}
-                  checked={field.state.value}
-                  onCheckedChange={(checked) => field.handleChange(!!checked)}
-                />
-                <FieldLabel htmlFor={field.name}>Required</FieldLabel>
-              </div>
+              <Toggle
+                aria-label="Toggle Required"
+                variant="outline"
+                id={field.name}
+                pressed={field.state.value}
+                onPressedChange={(pressed) => field.handleChange(pressed)}
+                className="data-[state=on]:border-red-500 data-[state=on]:text-red-500 data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-red-500 data-[state=on]:*:[svg]:stroke-red-500"
+              >
+                <AsteriskIcon /> Required
+              </Toggle>
             </Field>
           )}
+        </form.Field>
+
+        {/* Validation Rules - Min/Max */}
+        <form.Field name="type">
+          {(typeField) => {
+            const fieldType = typeField.state.value as FieldType;
+            const config = VALIDATION_CONFIG[fieldType];
+
+            return config.showValidation ? (
+              <div className="grid grid-cols-2 gap-4">
+                {(["min", "max"] as const).map((minOrMax) => (
+                  <form.Field key={minOrMax} name={`validation.${minOrMax}`}>
+                    {(field) => (
+                      <Field>
+                        <FieldContent>
+                          <FieldLabel htmlFor={field.name}>
+                            {config.labels[minOrMax]}
+                          </FieldLabel>
+                        </FieldContent>
+                        <ValidationInput
+                          fieldType={fieldType}
+                          minOrMax={minOrMax}
+                          value={field.state.value as string}
+                          onChange={field.handleChange}
+                        />
+                      </Field>
+                    )}
+                  </form.Field>
+                ))}
+              </div>
+            ) : null;
+          }}
         </form.Field>
       </FieldSet>
 

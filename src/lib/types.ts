@@ -10,6 +10,14 @@ export type FieldType =
   | "checkbox"
   | "date";
 
+// Validation rules for different field types
+export interface ValidationRules {
+  minLength?: number; // For text, textarea
+  maxLength?: number; // For text, textarea
+  min?: number; // For number, date (as timestamp)
+  max?: number; // For number, date (as timestamp)
+}
+
 // Form field definition
 export interface FormField {
   id: string;
@@ -21,6 +29,7 @@ export interface FormField {
   required?: boolean;
   defaultValue?: string | number | boolean;
   options?: string[]; // For select, radio fields
+  validation?: ValidationRules; // Nested validation rules
 }
 
 // Complete form definition
@@ -28,6 +37,14 @@ export interface FormDefinition {
   title: string;
   fields: FormField[];
 }
+
+// Zod schema for validation rules
+const validationRulesSchema = z.object({
+  minLength: z.number().min(0).optional(),
+  maxLength: z.number().min(0).optional(),
+  min: z.number().optional(),
+  max: z.number().optional(),
+});
 
 // Zod schema for form validation
 export const formFieldSchema = z.object({
@@ -48,6 +65,7 @@ export const formFieldSchema = z.object({
   required: z.boolean().default(false),
   defaultValue: z.union([z.string(), z.number(), z.boolean()]).optional(),
   options: z.array(z.string()).optional(), // For select, radio fields
+  validation: validationRulesSchema.optional(),
 });
 
 export const formSchema = z.object({

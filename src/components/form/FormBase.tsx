@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useFieldContext } from "./hooks";
+import type { ValidationRules } from "../../lib/types";
 import {
   Field,
   FieldContent,
@@ -16,6 +17,7 @@ export type FormControlProps = {
   value?: string | number | boolean;
   options?: { label: string; value: string }[];
   required?: boolean;
+  validation?: ValidationRules;
 };
 
 type FormBaseProps = FormControlProps & {

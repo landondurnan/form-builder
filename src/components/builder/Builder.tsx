@@ -58,6 +58,7 @@ export function Builder() {
         description: formField.description,
       }),
       ...(formField.required && { required: formField.required }),
+      ...(formField.validation && { validation: formField.validation }),
     };
 
     if (isInputType) {
