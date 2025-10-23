@@ -77,6 +77,15 @@ const shouldShowPlaceholder = (type: FieldType): boolean => {
   return !["checkbox", "radio"].includes(type);
 };
 
+const shouldUseOptionsForDefault = (type: FieldType): boolean => {
+  return ["select", "checkbox", "radio"].includes(type);
+};
+
+const DEFAULT_VALUE_INPUT_TYPES: Partial<Record<FieldType, string>> = {
+  number: "number",
+  date: "date",
+};
+
 export function AddFieldForm({ onAddField }: AddFieldFormProps) {
   const form = useAppForm({
     defaultValues: {
@@ -247,18 +256,55 @@ export function AddFieldForm({ onAddField }: AddFieldFormProps) {
 
         <form.Field name="defaultValue">
           {(field) => (
-            <Field>
-              <FieldContent>
-                <FieldLabel htmlFor={field.name}>Default Value</FieldLabel>
-              </FieldContent>
-              <Input
-                id={field.name}
-                type="text"
-                placeholder="e.g., Default text"
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-              />
-            </Field>
+            <form.Field name="type">
+              {(typeField) => (
+                <Field>
+                  <FieldContent>
+                    <FieldLabel htmlFor={field.name}>Default Value</FieldLabel>
+                  </FieldContent>
+                  {shouldUseOptionsForDefault(
+                    typeField.state.value as FieldType
+                  ) ? (
+                    <form.Field name="options">
+                      {(optionsField) => {
+                        const options = parseOptionsFromTextarea(
+                          optionsField.state.value
+                        );
+                        return (
+                          <Select
+                            value={field.state.value}
+                            onValueChange={(value) => field.handleChange(value)}
+                          >
+                            <SelectTrigger className="w-full" id={field.name}>
+                              <SelectValue placeholder="Select a default value" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {options.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        );
+                      }}
+                    </form.Field>
+                  ) : (
+                    <Input
+                      id={field.name}
+                      type={
+                        DEFAULT_VALUE_INPUT_TYPES[
+                          typeField.state.value as FieldType
+                        ] || "text"
+                      }
+                      placeholder="e.g., Default text"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                    />
+                  )}
+                </Field>
+              )}
+            </form.Field>
           )}
         </form.Field>
 
