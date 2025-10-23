@@ -9,7 +9,7 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   return (
-    <main className="p-8">
+    <main className="h-screen">
       <Builder />
     </main>
   );

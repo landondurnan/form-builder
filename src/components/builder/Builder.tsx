@@ -47,102 +47,103 @@ export function Builder() {
   );
 
   return (
-    <div>
-      <h2 className="text-lg font-semibold">Form Builder</h2>
-      <p className="text-muted-foreground mb-6">
-        Build your own custom forms by adding and configuring fields below.
-      </p>
+    <div className="flex gap-4">
+      <div className="flex-1 p-8">
+        <h2 className="text-lg font-semibold">Form Builder</h2>
+        <p className="text-muted-foreground mb-6">
+          Build your own custom forms by adding and configuring fields below.
+        </p>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          form.handleSubmit();
-        }}
-        className="p-4 border rounded-md"
-      >
-        {/* Form Title */}
-        <FieldGroup>
-          <form.AppField name="title">
-            {(field) => (
-              <field.Input label="Title" placeholder="Untitled Form" />
-            )}
-          </form.AppField>
-        </FieldGroup>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            form.handleSubmit();
+          }}
+        >
+          <div className="p-4 border rounded-md mb-4">
+            {/* Form Title */}
+            <FieldGroup>
+              <form.AppField name="title">
+                {(field) => (
+                  <field.Input label="Title" placeholder="Untitled Form" />
+                )}
+              </form.AppField>
+            </FieldGroup>
 
-        <FieldSeparator className="my-2" />
+            <FieldSeparator className="my-2" />
 
-        {/* Form Fields */}
-        <FieldGroup className="mb-6">
-          <form.AppField name="fields" mode="array">
-            {(arrayField) => (
-              <div className="space-y-4">
-                {arrayField.state.value.map((formField, index) => {
-                  const componentName =
-                    FIELD_TYPE_COMPONENT_MAP[formField.type];
-                  const FieldComponent = (
-                    arrayField as unknown as Record<
-                      string,
-                      React.ComponentType<{
-                        label: string;
-                        placeholder?: string;
-                        type?: string;
-                        value: string | number | boolean | undefined;
-                        children?: React.ReactNode;
-                      }>
-                    >
-                  )[componentName];
-                  if (!FieldComponent) return null;
-
-                  const isInputType = INPUT_TYPES.includes(formField.type);
-                  const needsOptions =
-                    formField.type === "select" || formField.type === "radio";
-
-                  const fieldProps = {
-                    label: formField.label,
-                    ...(formField.placeholder && {
-                      placeholder: formField.placeholder,
-                    }),
-                    ...(formField.description && {
-                      description: formField.description,
-                    }),
-                    ...(isInputType && { type: formField.type }),
-                  };
-
-                  return (
-                    <form.AppField
-                      key={`${formField.id}-${index}`}
-                      name={`fields[${index}].defaultValue`}
-                    >
-                      {(subField) => (
-                        <FieldComponent
-                          {...fieldProps}
-                          value={subField.state.value}
+            {/* Form Fields */}
+            <FieldGroup className="mb-6">
+              <form.AppField name="fields" mode="array">
+                {(arrayField) => (
+                  <div className="space-y-4">
+                    {arrayField.state.value.map((formField, index) => {
+                      const componentName =
+                        FIELD_TYPE_COMPONENT_MAP[formField.type];
+                      const FieldComponent = (
+                        arrayField as unknown as Record<
+                          string,
+                          React.ComponentType<{
+                            label: string;
+                            placeholder?: string;
+                            type?: string;
+                            value: string | number | boolean | undefined;
+                            children?: React.ReactNode;
+                          }>
                         >
-                          {needsOptions &&
-                            formField.options?.map((option) => (
-                              <SelectItem key={option} value={option}>
-                                {option}
-                              </SelectItem>
-                            ))}
-                        </FieldComponent>
-                      )}
-                    </form.AppField>
-                  );
-                })}
-              </div>
-            )}
-          </form.AppField>
-        </FieldGroup>
+                      )[componentName];
+                      if (!FieldComponent) return null;
 
-        <FieldSeparator className="my-2" />
+                      const isInputType = INPUT_TYPES.includes(formField.type);
+                      const needsOptions =
+                        formField.type === "select" ||
+                        formField.type === "radio";
 
-        {/* Add New Field Form */}
+                      const fieldProps = {
+                        label: formField.label,
+                        ...(formField.placeholder && {
+                          placeholder: formField.placeholder,
+                        }),
+                        ...(formField.description && {
+                          description: formField.description,
+                        }),
+                        ...(isInputType && { type: formField.type }),
+                      };
+
+                      return (
+                        <form.AppField
+                          key={`${formField.id}-${index}`}
+                          name={`fields[${index}].defaultValue`}
+                        >
+                          {(subField) => (
+                            <FieldComponent
+                              {...fieldProps}
+                              value={subField.state.value}
+                            >
+                              {needsOptions &&
+                                formField.options?.map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                            </FieldComponent>
+                          )}
+                        </form.AppField>
+                      );
+                    })}
+                  </div>
+                )}
+              </form.AppField>
+            </FieldGroup>
+          </div>
+          <Button type="submit">Save Form</Button>
+        </form>
+      </div>
+
+      {/* Add Field Form */}
+      <div className="bg-sidebar h-screen p-2">
         <AddFieldForm onAddField={handleAddField} />
-
-        <FieldSeparator className="my-2" />
-
-        <Button type="submit">Save Form</Button>
-      </form>
+      </div>
     </div>
   );
 }

@@ -81,85 +81,81 @@ export function AddFieldForm({ onAddField }: AddFieldFormProps) {
   ]);
 
   return (
-    <div className="mb-4 p-4 border rounded-md space-y-4">
-      <h3 className="text-sm font-medium">Add New Field</h3>
+    <div className="min-w-md mb-4 p-4 space-y-4">
+      <h3 className="font-medium">Add New Field</h3>
 
       {/* Basic Field Info */}
-      <div className="grid grid-cols-2 gap-4">
-        <Field>
-          <FieldLabel>Label</FieldLabel>
-          <Input
-            type="text"
-            placeholder="Enter field label"
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-          />
-        </Field>
-        <Field>
-          <FieldLabel>Type</FieldLabel>
-          <Select
-            value={type}
-            onValueChange={(value) => setType(value as FieldType)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select field type" />
-            </SelectTrigger>
-            <SelectContent>
-              {FIELD_TYPES.map((fieldType) => (
-                <SelectItem key={fieldType} value={fieldType}>
-                  {fieldType.charAt(0).toUpperCase() + fieldType.slice(1)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-      </div>
+
+      <Field>
+        <FieldLabel>Label</FieldLabel>
+        <Input
+          type="text"
+          placeholder="Enter field label"
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+        />
+      </Field>
+      <Field>
+        <FieldLabel>Type</FieldLabel>
+        <Select
+          value={type}
+          onValueChange={(value) => setType(value as FieldType)}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select field type" />
+          </SelectTrigger>
+          <SelectContent>
+            {FIELD_TYPES.map((fieldType) => (
+              <SelectItem key={fieldType} value={fieldType}>
+                {fieldType.charAt(0).toUpperCase() + fieldType.slice(1)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </Field>
 
       {/* Optional Field Properties */}
-      <div className="grid grid-cols-2 gap-4">
-        <Field>
-          <FieldLabel>Placeholder</FieldLabel>
-          <Input
-            type="text"
-            placeholder="e.g., Enter your name"
-            value={placeholder}
-            onChange={(e) => setPlaceholder(e.target.value)}
-          />
-        </Field>
-        <Field>
-          <FieldLabel>Default Value</FieldLabel>
-          <Input
-            type="text"
-            placeholder="e.g., Default text"
-            value={defaultValue}
-            onChange={(e) => setDefaultValue(e.target.value)}
-          />
-        </Field>
-      </div>
+
+      <Field>
+        <FieldLabel>Placeholder</FieldLabel>
+        <Input
+          type="text"
+          placeholder="e.g., Enter your name"
+          value={placeholder}
+          onChange={(e) => setPlaceholder(e.target.value)}
+        />
+      </Field>
+      <Field>
+        <FieldLabel>Default Value</FieldLabel>
+        <Input
+          type="text"
+          placeholder="e.g., Default text"
+          value={defaultValue}
+          onChange={(e) => setDefaultValue(e.target.value)}
+        />
+      </Field>
 
       {/* Help Text and Required */}
-      <div className="grid grid-cols-2 gap-4">
-        <Field>
-          <FieldLabel>Help Text</FieldLabel>
-          <Input
-            type="text"
-            placeholder="e.g., This field is required"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </Field>
-        <div className="flex items-end">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={required}
-              onChange={(e) => setRequired(e.target.checked)}
-              className="rounded"
-            />
-            <span className="text-sm font-medium">Required</span>
-          </label>
-        </div>
-      </div>
+
+      <Field>
+        <FieldLabel>Help Text</FieldLabel>
+        <Input
+          type="text"
+          placeholder="e.g., This field is required"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+      </Field>
+
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={required}
+          onChange={(e) => setRequired(e.target.checked)}
+          className="rounded"
+        />
+        <span className="text-sm font-medium">Required</span>
+      </label>
 
       <Button
         type="button"
