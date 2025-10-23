@@ -46,7 +46,7 @@ export function AddFieldForm({ onAddField }: AddFieldFormProps) {
         e.preventDefault();
         form.handleSubmit();
       }}
-      className="min-w-md mb-4 p-6 space-y-4"
+      className="min-w-md mb-4 p-4 space-y-2"
     >
       <h3 className="font-medium">Add New Field</h3>
 
@@ -62,7 +62,7 @@ export function AddFieldForm({ onAddField }: AddFieldFormProps) {
       {/* Validation */}
       <AddFieldValidation form={form} />
 
-      <Button type="submit" className="w-full">
+      <Button type="submit" className="w-full mt-6">
         Add Field
       </Button>
     </form>

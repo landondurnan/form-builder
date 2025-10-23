@@ -30,7 +30,7 @@ interface AddFieldOptionsProps {
 export function AddFieldOptions({ form }: AddFieldOptionsProps) {
   return (
     <>
-      <FieldSeparator className="my-2" />
+      <FieldSeparator className="my-1" />
       <FieldSet>
         <FieldLegend>Optional Properties</FieldLegend>
         <form.Field name="type">

@@ -38,7 +38,7 @@ export function FormCheckboxGroup(props: FormCheckboxGroupProps) {
 
   return (
     <FormBase {...baseProps}>
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {options.map((option) => (
           <div key={option.value} className="flex items-center gap-2">
             <Checkbox
