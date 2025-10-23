@@ -1,7 +1,8 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
+import { z } from "zod";
 import { useAppForm } from "../form/hooks";
-import { formSchema } from "../../lib/types";
 import type { FormField } from "../../lib/types";
+import { buildFieldSchema } from "../../lib/formUtils";
 import { FieldGroup, FieldSeparator } from "../ui/field";
 import { Button } from "../ui/button";
 import { SelectItem } from "../ui/select";
@@ -20,22 +21,44 @@ const FIELD_TYPE_COMPONENT_MAP = {
 } as const;
 
 export function Builder() {
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
   const form = useAppForm({
     defaultValues: {
       title: "",
       fields: [] as FormField[],
     },
-    onSubmit: (values) => {
-      console.log("Form Submitted:", values);
-    },
-    validators: {
-      onChangeAsync: async ({ value }) => {
+    onSubmit: async (values) => {
+      // Validate all fields on submit
+      const errors: Record<string, string> = {};
+
+      for (let index = 0; index < values.value.fields.length; index++) {
+        const field = values.value.fields[index];
+        const fieldValue = field.defaultValue;
+
         try {
-          await formSchema.parseAsync(value);
+          const fieldSchema = buildFieldSchema(field);
+          await fieldSchema.parseAsync(fieldValue);
         } catch (err) {
-          return err;
+          if (err instanceof z.ZodError) {
+            const errorMessage = err.issues[0]?.message;
+            errors[`fields[${index}].defaultValue`] =
+              errorMessage || "Invalid value";
+          } else {
+            errors[`fields[${index}].defaultValue`] = "Invalid value";
+          }
         }
-      },
+      }
+
+      // If there are errors, store them and don't submit
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors);
+        return;
+      }
+
+      // Clear errors on successful submit
+      setFieldErrors({});
+      console.log("Form Submitted:", values.value);
     },
   });
 
@@ -108,6 +131,7 @@ export function Builder() {
         </p>
 
         <form
+          noValidate
           onSubmit={(e) => {
             e.preventDefault();
             form.handleSubmit();
@@ -168,6 +192,9 @@ export function Builder() {
                             <FieldComponent
                               {...fieldProps}
                               value={subField.state.value}
+                              externalError={
+                                fieldErrors[`fields[${index}].defaultValue`]
+                              }
                             >
                               {formField.type === "select" &&
                                 renderSelectOptions(formField.options)}

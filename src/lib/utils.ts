@@ -33,25 +33,33 @@ export function getValidationErrorMessage(
 
   // Check min (for numbers and dates)
   if (validationRule.min !== undefined && value !== undefined && value !== "") {
-    const numValue = Number(value);
     if (fieldType === "date") {
-      const minDate = new Date(validationRule.min).toLocaleDateString();
-      return `${fieldName} must be on or after ${minDate}`;
-    }
-    if (!isNaN(numValue) && numValue < validationRule.min) {
-      return `${fieldName} must be at least ${validationRule.min}`;
+      // Compare date strings directly (yyyy-mm-dd format compares chronologically)
+      if (typeof value === "string" && value < (validationRule.min as string)) {
+        return `${fieldName} must be on or after ${validationRule.min}`;
+      }
+    } else {
+      const numValue = Number(value);
+      const minNum = Number(validationRule.min);
+      if (!isNaN(numValue) && !isNaN(minNum) && numValue < minNum) {
+        return `${fieldName} must be at least ${validationRule.min}`;
+      }
     }
   }
 
   // Check max (for numbers and dates)
   if (validationRule.max !== undefined && value !== undefined && value !== "") {
-    const numValue = Number(value);
     if (fieldType === "date") {
-      const maxDate = new Date(validationRule.max).toLocaleDateString();
-      return `${fieldName} must be on or before ${maxDate}`;
-    }
-    if (!isNaN(numValue) && numValue > validationRule.max) {
-      return `${fieldName} cannot exceed ${validationRule.max}`;
+      // Compare date strings directly (yyyy-mm-dd format compares chronologically)
+      if (typeof value === "string" && value > (validationRule.max as string)) {
+        return `${fieldName} must be on or before ${validationRule.max}`;
+      }
+    } else {
+      const numValue = Number(value);
+      const maxNum = Number(validationRule.max);
+      if (!isNaN(numValue) && !isNaN(maxNum) && numValue > maxNum) {
+        return `${fieldName} cannot exceed ${validationRule.max}`;
+      }
     }
   }
 

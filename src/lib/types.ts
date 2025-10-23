@@ -23,8 +23,8 @@ export type PatternType =
 export interface ValidationRules {
   minLength?: number; // For text, textarea
   maxLength?: number; // For text, textarea
-  min?: number; // For number, date (as timestamp)
-  max?: number; // For number, date (as timestamp)
+  min?: number | string; // For number, date (as timestamp or ISO date string)
+  max?: number | string; // For number, date (as timestamp or ISO date string)
   pattern?: PatternType; // For text fields with pattern validation
   customPattern?: string; // For custom regex patterns
 }

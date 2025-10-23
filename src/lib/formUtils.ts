@@ -1,5 +1,10 @@
 import { z } from "zod";
-import type { FieldType, FormField } from "./types";
+import type {
+  FieldType,
+  FormField,
+  ValidationRules,
+  PatternType,
+} from "./types";
 
 /**
  * All supported field types
@@ -29,8 +34,10 @@ export const addFieldSchema = z.object({
     .object({
       minLength: z.coerce.number().min(0).optional().or(z.literal("")),
       maxLength: z.coerce.number().min(0).optional().or(z.literal("")),
-      min: z.coerce.number().optional().or(z.literal("")),
-      max: z.coerce.number().optional().or(z.literal("")),
+      // min/max can be numbers (for number fields) or ISO date strings (for date fields)
+      // Keep as strings and only coerce numbers when needed
+      min: z.string().optional().or(z.literal("")),
+      max: z.string().optional().or(z.literal("")),
       pattern: z
         .enum(["email", "url", "phone", "postal", "creditCard", "custom"])
         .optional(),
@@ -210,21 +217,27 @@ export const shouldUseOptionsForDefault = (type: FieldType): boolean => {
  */
 export const buildFormField = (validatedData: AddFieldFormData): FormField => {
   // Build validation object, only including non-empty values
-  const validationRules: Record<string, number | string> = {};
+  const validationRules: ValidationRules = {};
   if (validatedData.validation?.minLength) {
     validationRules.minLength = validatedData.validation.minLength;
   }
   if (validatedData.validation?.maxLength) {
     validationRules.maxLength = validatedData.validation.maxLength;
   }
-  if (validatedData.validation?.min) {
+  if (
+    validatedData.validation?.min !== undefined &&
+    validatedData.validation?.min !== ""
+  ) {
     validationRules.min = validatedData.validation.min;
   }
-  if (validatedData.validation?.max) {
+  if (
+    validatedData.validation?.max !== undefined &&
+    validatedData.validation?.max !== ""
+  ) {
     validationRules.max = validatedData.validation.max;
   }
   if (validatedData.validation?.pattern) {
-    validationRules.pattern = validatedData.validation.pattern;
+    validationRules.pattern = validatedData.validation.pattern as PatternType;
   }
   if (
     validatedData.validation?.customPattern &&
@@ -258,4 +271,115 @@ export const buildFormField = (validatedData: AddFieldFormData): FormField => {
   };
 
   return newField;
+};
+
+/**
+ * Build a Zod schema for a field based on its validation rules
+ * This enables comprehensive schema-based validation with TanStack Form
+ */
+export const buildFieldSchema = (field: FormField): z.ZodType => {
+  let schema: z.ZodType;
+
+  // Type-specific base schemas
+  if (field.type === "number") {
+    schema = z.coerce.number();
+  } else if (field.type === "date") {
+    schema = z.coerce.date();
+  } else {
+    schema = z.string();
+  }
+
+  // Apply validation rules FIRST (before optional)
+  const validation = field.validation;
+
+  if (field.type === "text" || field.type === "textarea") {
+    let stringSchema = schema as z.ZodString;
+
+    if (validation?.minLength) {
+      stringSchema = stringSchema.min(
+        validation.minLength,
+        `Must be at least ${validation.minLength} characters`
+      );
+    }
+    if (validation?.maxLength) {
+      stringSchema = stringSchema.max(
+        validation.maxLength,
+        `Cannot exceed ${validation.maxLength} characters`
+      );
+    }
+    if (validation?.pattern) {
+      let pattern: string | undefined;
+      if (validation.pattern === "custom" && validation.customPattern) {
+        pattern = validation.customPattern;
+      } else {
+        pattern = PATTERN_DEFINITIONS[validation.pattern]?.pattern;
+      }
+      if (pattern) {
+        stringSchema = stringSchema.regex(
+          new RegExp(pattern),
+          `Invalid format for ${validation.pattern}`
+        );
+      }
+    }
+
+    schema = stringSchema;
+  } else if (field.type === "number") {
+    let numberSchema = schema as z.ZodNumber;
+
+    if (validation?.min !== undefined && validation.min !== "") {
+      const minNum = Number(validation.min);
+      if (!isNaN(minNum)) {
+        numberSchema = numberSchema.min(minNum, `Must be at least ${minNum}`);
+      }
+    }
+    if (validation?.max !== undefined && validation.max !== "") {
+      const maxNum = Number(validation.max);
+      if (!isNaN(maxNum)) {
+        numberSchema = numberSchema.max(maxNum, `Cannot exceed ${maxNum}`);
+      }
+    }
+
+    schema = numberSchema;
+  } else if (field.type === "date") {
+    let dateSchema = schema as z.ZodDate;
+
+    if (validation?.min !== undefined && validation.min !== "") {
+      // For date strings in yyyy-mm-dd format, we can compare them directly as strings
+      // since they naturally sort chronologically
+      const minDate = new Date(validation.min);
+      dateSchema = dateSchema.refine((val) => val >= minDate, {
+        message: `Must be on or after ${validation.min}`,
+      });
+    }
+    if (validation?.max !== undefined && validation.max !== "") {
+      const maxDate = new Date(validation.max);
+      dateSchema = dateSchema.refine((val) => val <= maxDate, {
+        message: `Must be on or before ${validation.max}`,
+      });
+    }
+
+    schema = dateSchema;
+  }
+
+  // Apply required constraint LAST
+  if (field.required) {
+    if (field.type === "text" || field.type === "textarea") {
+      schema = (schema as z.ZodString).min(1, `${field.label} is required`);
+    } else if (field.type === "number") {
+      schema = (schema as z.ZodNumber).refine(
+        (val) => val !== undefined && val !== null,
+        { message: `${field.label} is required` }
+      );
+    } else if (field.type === "date") {
+      schema = (schema as z.ZodDate).refine(
+        (val) => val !== undefined && val !== null,
+        { message: `${field.label} is required` }
+      );
+    }
+  } else {
+    // For optional fields, make them nullable/optional
+    schema = schema.nullable().optional();
+  }
+
+  return schema;
 };

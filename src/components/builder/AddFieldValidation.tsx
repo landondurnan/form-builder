@@ -55,13 +55,20 @@ function ValidationInput({
 }) {
   const config = VALIDATION_CONFIG[fieldType];
   const placeholder = minOrMax === "min" ? "e.g., 5" : "e.g., 100";
+  const isDateInput = config.inputType === "date";
+
+  // Format date value for date input (expects YYYY-MM-DD format)
+  const displayValue = isDateInput && value ? value : (value ?? "");
 
   return (
     <Input
       type={config.inputType}
       placeholder={placeholder}
-      value={value ?? ""}
-      onChange={(e) => onChange(e.target.value === "" ? "" : e.target.value)}
+      value={displayValue}
+      onChange={(e) => {
+        const newValue = e.target.value;
+        onChange(newValue === "" ? "" : newValue);
+      }}
     />
   );
 }

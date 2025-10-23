@@ -24,6 +24,7 @@ type FormBaseProps = FormControlProps & {
   children: ReactNode;
   horizontal?: boolean;
   controlFirst?: boolean;
+  externalError?: string; // For form-level validation errors
 };
 
 export function FormBase({
@@ -33,9 +34,13 @@ export function FormBase({
   controlFirst,
   horizontal,
   required,
+  externalError,
 }: FormBaseProps) {
   const field = useFieldContext();
-  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+  const isInvalid =
+    (field.state.meta.isTouched && !field.state.meta.isValid) ||
+    !!externalError;
+
   const labelElement = (
     <>
       <FieldLabel htmlFor={field.name} required={required}>
@@ -44,8 +49,13 @@ export function FormBase({
       {description && <FieldDescription>{description}</FieldDescription>}
     </>
   );
-  const errorElem = isInvalid && (
-    <FieldError errors={field.state.meta.errors} />
+
+  // Use external error from form-level validation if provided, otherwise extract from field
+  const errorMessage =
+    externalError || (field.state.meta.errors?.[0] as string);
+
+  const errorElem = isInvalid && errorMessage && (
+    <FieldError errors={[{ message: errorMessage }]} />
   );
 
   return (
