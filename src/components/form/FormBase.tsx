@@ -15,6 +15,7 @@ export type FormControlProps = {
   type?: string;
   value?: string | number | boolean;
   options?: { label: string; value: string }[];
+  required?: boolean;
 };
 
 type FormBaseProps = FormControlProps & {
@@ -29,12 +30,15 @@ export function FormBase({
   description,
   controlFirst,
   horizontal,
+  required,
 }: FormBaseProps) {
   const field = useFieldContext();
   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
   const labelElement = (
     <>
-      <FieldLabel htmlFor={field.name}>{label}</FieldLabel>
+      <FieldLabel htmlFor={field.name} required={required}>
+        {label}
+      </FieldLabel>
       {description && <FieldDescription>{description}</FieldDescription>}
     </>
   );

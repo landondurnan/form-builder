@@ -57,6 +57,7 @@ export function Builder() {
       ...(formField.description && {
         description: formField.description,
       }),
+      ...(formField.required && { required: formField.required }),
     };
 
     if (isInputType) {
@@ -114,9 +115,25 @@ export function Builder() {
           <div className="p-4 border rounded-md mb-4">
             {/* Form Title */}
             <FieldGroup>
-              <form.AppField name="title">
+              <form.AppField
+                name="title"
+                validators={{
+                  onChange: ({ value }) => {
+                    if (!value || value.trim().length === 0) {
+                      return {
+                        message: "Form title is required",
+                      };
+                    }
+                    return undefined;
+                  },
+                }}
+              >
                 {(field) => (
-                  <field.Input label="Title" placeholder="Untitled Form" />
+                  <field.Input
+                    label="Title"
+                    placeholder="Untitled Form"
+                    required
+                  />
                 )}
               </form.AppField>
             </FieldGroup>
