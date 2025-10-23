@@ -73,6 +73,10 @@ const shouldShowOptionsField = (type: FieldType): boolean => {
   return ["select", "checkbox", "radio"].includes(type);
 };
 
+const shouldShowPlaceholder = (type: FieldType): boolean => {
+  return !["checkbox", "radio"].includes(type);
+};
+
 export function AddFieldForm({ onAddField }: AddFieldFormProps) {
   const form = useAppForm({
     defaultValues: {
@@ -218,21 +222,27 @@ export function AddFieldForm({ onAddField }: AddFieldFormProps) {
       <FieldSeparator className="my-2" />
       <FieldSet>
         <FieldLegend>Optional Properties</FieldLegend>
-        <form.Field name="placeholder">
-          {(field) => (
-            <Field>
-              <FieldContent>
-                <FieldLabel htmlFor={field.name}>Placeholder</FieldLabel>
-              </FieldContent>
-              <Input
-                id={field.name}
-                type="text"
-                placeholder="e.g., Enter your name"
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-              />
-            </Field>
-          )}
+        <form.Field name="type">
+          {(typeField) =>
+            shouldShowPlaceholder(typeField.state.value as FieldType) ? (
+              <form.Field name="placeholder">
+                {(field) => (
+                  <Field>
+                    <FieldContent>
+                      <FieldLabel htmlFor={field.name}>Placeholder</FieldLabel>
+                    </FieldContent>
+                    <Input
+                      id={field.name}
+                      type="text"
+                      placeholder="e.g., Enter your name"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                    />
+                  </Field>
+                )}
+              </form.Field>
+            ) : null
+          }
         </form.Field>
 
         <form.Field name="defaultValue">

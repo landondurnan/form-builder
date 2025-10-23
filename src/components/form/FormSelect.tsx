@@ -26,7 +26,7 @@ export function FormSelect({
           id={field.name}
           onBlur={field.handleBlur}
         >
-          <SelectValue />
+          <SelectValue placeholder={props.placeholder} />
         </SelectTrigger>
         <SelectContent>{children}</SelectContent>
       </Select>
