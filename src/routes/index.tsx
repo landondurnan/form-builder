@@ -10,5 +10,5 @@ export const Route = createFileRoute("/")({
 function Index() {
   const { mode } = useBuilderMode();
 
-  return <main>{mode === "builder" ? <Builder /> : <FormPreview />}</main>;
+  return <>{mode === "builder" ? <Builder /> : <FormPreview />}</>;
 }
