@@ -34,7 +34,7 @@ export function FormPreview() {
 
       for (let index = 0; index < (savedForm?.fields?.length || 0); index++) {
         const field = savedForm!.fields[index];
-        const fieldValue = values.value.responses[field.id];
+        const fieldValue = values.value.responses[field.name];
 
         try {
           const fieldSchema = buildFieldSchema(field);
@@ -42,7 +42,7 @@ export function FormPreview() {
         } catch {
           hasErrors = true;
           // Mark field as touched so errors display
-          form.setFieldMeta(`responses.${field.id}`, (prev) => ({
+          form.setFieldMeta(`responses.${field.name}`, (prev) => ({
             ...prev,
             isTouched: true,
           }));
@@ -93,7 +93,7 @@ export function FormPreview() {
                 return (
                   <form.AppField
                     key={`${formField.id}-${index}`}
-                    name={`responses.${formField.id}`}
+                    name={`responses.${formField.name}`}
                     validators={{
                       onBlur: ({ value }) => {
                         try {
