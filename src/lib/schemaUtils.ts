@@ -36,58 +36,70 @@ export function buildFieldSchema(field: FormField): z.ZodTypeAny {
       schema = z.string().catch("");
   }
 
-  // Apply validation rules
+  // Apply validation rules before making optional
   if (field.validation) {
     const { minLength, maxLength, min, max, pattern, customPattern } =
       field.validation;
 
     if (field.type === "text" || field.type === "textarea") {
-      if (minLength !== undefined) {
-        schema = (schema as z.ZodString).min(minLength);
+      // Build string validation step by step
+      let stringSchema = schema as z.ZodString;
+
+      // Only apply minLength if it's a positive number
+      if (typeof minLength === "number" && minLength > 0) {
+        stringSchema = stringSchema.min(minLength);
       }
-      if (maxLength !== undefined) {
-        schema = (schema as z.ZodString).max(maxLength);
+      // Only apply maxLength if it's a positive number
+      if (typeof maxLength === "number" && maxLength > 0) {
+        stringSchema = stringSchema.max(maxLength);
       }
       if (customPattern) {
-        schema = (schema as z.ZodString).regex(new RegExp(customPattern));
+        stringSchema = stringSchema.regex(new RegExp(customPattern));
       }
-    }
 
-    if (field.type === "number") {
-      if (min !== undefined) {
-        schema = (schema as z.ZodNumber).min(Number(min));
+      // Pattern validation
+      if (pattern && pattern !== "custom") {
+        const patterns: Record<string, RegExp> = {
+          email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+          url: /^https?:\/\/.+/,
+          phone: /^\d{10}$/,
+          postal: /^\d{5}(?:-\d{4})?$/,
+          creditCard: /^\d{13,19}$/,
+        };
+        const patternRegex = patterns[pattern];
+        if (patternRegex) {
+          stringSchema = stringSchema.regex(patternRegex);
+        }
       }
-      if (max !== undefined) {
-        schema = (schema as z.ZodNumber).max(Number(max));
-      }
-    }
 
-    if (field.type === "date") {
-      if (min !== undefined) {
-        schema = (schema as z.ZodString).min(Number(min));
-      }
-      if (max !== undefined) {
-        schema = (schema as z.ZodString).max(Number(max));
-      }
-    }
+      schema = stringSchema;
+    } else if (field.type === "number") {
+      // Build number validation step by step
+      let numberSchema = schema as z.ZodNumber;
 
-    // Pattern validation for text fields
-    if (pattern && (field.type === "text" || field.type === "textarea")) {
-      const patterns: Record<string, RegExp> = {
-        email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-        url: /^https?:\/\/.+/,
-        phone: /^\d{10}$/,
-        postal: /^\d{5}(?:-\d{4})?$/,
-        creditCard: /^\d{13,19}$/,
-      };
-      const patternRegex = patterns[pattern];
-      if (patternRegex) {
-        schema = (schema as z.ZodString).regex(patternRegex);
+      if (min !== undefined && min !== "") {
+        const minVal = Number(min);
+        if (!isNaN(minVal)) {
+          numberSchema = numberSchema.min(minVal);
+        }
       }
+      if (max !== undefined && max !== "") {
+        const maxVal = Number(max);
+        if (!isNaN(maxVal)) {
+          numberSchema = numberSchema.max(maxVal);
+        }
+      }
+
+      schema = numberSchema;
+    } else if (field.type === "date") {
+      // Date fields with min/max constraints
+      // We don't apply them to the string schema itself since dates are complex
+      // Instead, they would need custom validation logic
+      // For now, we just store them but don't apply them to the schema
     }
   }
 
-  // Apply required/optional
+  // Apply required/optional after all validation rules
   if (!field.required) {
     schema = schema.optional();
   }
@@ -119,14 +131,80 @@ export function buildFormSchema(
 export function exportFormAsJSONSchema(
   fields: FormField[]
 ): Record<string, unknown> {
-  const shape: Record<string, z.ZodTypeAny> = {};
+  const properties: Record<string, Record<string, unknown>> = {};
+  const required: string[] = [];
 
   for (const field of fields) {
-    shape[field.name] = buildFieldSchema(field);
+    const fieldSchema: Record<string, unknown> = {
+      type: field.type === "textarea" ? "string" : field.type,
+      title: field.label,
+    };
+
+    if (field.description) {
+      fieldSchema.description = field.description;
+    }
+
+    // Add validation constraints
+    if (field.validation) {
+      const { minLength, maxLength, min, max, pattern, customPattern } =
+        field.validation;
+
+      if (field.type === "text" || field.type === "textarea") {
+        if (minLength !== undefined && minLength > 0) {
+          fieldSchema.minLength = minLength;
+        }
+        if (maxLength !== undefined && maxLength > 0) {
+          fieldSchema.maxLength = maxLength;
+        }
+        if (pattern && pattern !== "custom") {
+          fieldSchema.pattern = pattern;
+        } else if (customPattern) {
+          fieldSchema.pattern = customPattern;
+        }
+      }
+
+      if (field.type === "number") {
+        if (min !== undefined && min !== "") {
+          fieldSchema.minimum = Number(min);
+        }
+        if (max !== undefined && max !== "") {
+          fieldSchema.maximum = Number(max);
+        }
+      }
+
+      if (field.type === "date") {
+        if (min !== undefined && min !== "") {
+          fieldSchema.minimum = min;
+        }
+        if (max !== undefined && max !== "") {
+          fieldSchema.maximum = max;
+        }
+      }
+    }
+
+    // Add options for select/radio/checkbox
+    if (field.options && field.options.length > 0) {
+      fieldSchema.enum = field.options;
+    }
+
+    // Add default value if present
+    if (field.defaultValue !== undefined && field.defaultValue !== "") {
+      fieldSchema.default = field.defaultValue;
+    }
+
+    properties[field.name] = fieldSchema;
+
+    if (field.required) {
+      required.push(field.name);
+    }
   }
 
-  const zodSchema = z.object(shape);
-  return z.toJSONSchema(zodSchema);
+  return {
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "object",
+    properties,
+    ...(required.length > 0 && { required }),
+  };
 }
 
 /**
@@ -207,6 +285,10 @@ export function importJSONSchema(jsonString: string): {
   const typeMap: Record<string, FormField["type"]> = {
     number: "number",
     integer: "number",
+    textarea: "textarea",
+    text: "text",
+    string: "text",
+    boolean: "checkbox",
   };
 
   // Extract fields from properties
@@ -223,18 +305,38 @@ export function importJSONSchema(jsonString: string): {
       // Extract validation rules from JSON Schema properties
       const validation: ValidationRules = {};
 
+      // String length constraints (minLength/maxLength)
       if (typeof schema.minLength === "number") {
         validation.minLength = schema.minLength;
       }
       if (typeof schema.maxLength === "number") {
         validation.maxLength = schema.maxLength;
       }
-      if (typeof schema.min === "number") {
-        validation.min = schema.min;
+
+      // Numeric/Date constraints (minimum/maximum)
+      if (fieldType === "number") {
+        if (typeof schema.minimum === "number") {
+          validation.min = schema.minimum;
+        }
+        if (typeof schema.maximum === "number") {
+          validation.max = schema.maximum;
+        }
+      } else if (fieldType === "date") {
+        if (
+          typeof schema.minimum === "string" ||
+          typeof schema.minimum === "number"
+        ) {
+          validation.min = schema.minimum;
+        }
+        if (
+          typeof schema.maximum === "string" ||
+          typeof schema.maximum === "number"
+        ) {
+          validation.max = schema.maximum;
+        }
       }
-      if (typeof schema.max === "number") {
-        validation.max = schema.max;
-      }
+
+      // Pattern validation
       if (typeof schema.pattern === "string") {
         // Check if it's a predefined pattern type
         const validPatterns = [

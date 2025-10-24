@@ -221,11 +221,19 @@ export const buildFormField = (
 ): FormField => {
   // Build validation object, only including non-empty values
   const validationRules: ValidationRules = {};
-  if (validatedData.validation?.minLength) {
-    validationRules.minLength = validatedData.validation.minLength;
+  if (
+    validatedData.validation?.minLength !== undefined &&
+    validatedData.validation?.minLength !== "" &&
+    validatedData.validation?.minLength !== 0
+  ) {
+    validationRules.minLength = validatedData.validation.minLength as number;
   }
-  if (validatedData.validation?.maxLength) {
-    validationRules.maxLength = validatedData.validation.maxLength;
+  if (
+    validatedData.validation?.maxLength !== undefined &&
+    validatedData.validation?.maxLength !== "" &&
+    validatedData.validation?.maxLength !== 0
+  ) {
+    validationRules.maxLength = validatedData.validation.maxLength as number;
   }
   if (
     validatedData.validation?.min !== undefined &&
