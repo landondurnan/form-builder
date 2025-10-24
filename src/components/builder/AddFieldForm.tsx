@@ -46,7 +46,7 @@ export function AddFieldForm({ onAddField }: AddFieldFormProps) {
         e.preventDefault();
         form.handleSubmit();
       }}
-      className="min-w-md mb-4 p-4 space-y-2"
+      className="min-w-md mb-4 p-6 space-y-2"
     >
       <h3 className="font-medium">Add New Field</h3>
 
