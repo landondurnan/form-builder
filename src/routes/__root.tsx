@@ -2,6 +2,7 @@ import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { BuilderProvider } from "@/context/BuilderContext";
 import { ModeToggle } from "@/components/builder/ModeToggle";
+import { Toaster } from "@/components/ui/sonner";
 
 const RootLayout = () => (
   <BuilderProvider>
@@ -13,6 +14,7 @@ const RootLayout = () => (
       <main className="flex-1 overflow-auto">
         <Outlet />
       </main>
+      <Toaster />
     </div>
     <TanStackRouterDevtools />
   </BuilderProvider>
