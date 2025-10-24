@@ -10,8 +10,8 @@ import {
   buildFormField,
   fieldToFormData,
 } from "../../lib/formUtils";
-import { Trash2, ChevronUp, ChevronDown } from "lucide-react";
-import { FieldSeparator } from "../ui/field";
+import { EditFieldActions } from "./EditFieldActions";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
 
 interface AddFieldFormProps {
   onAddField: (field: FormField) => void;
@@ -35,8 +35,6 @@ export function AddFieldForm({
   totalFields = 0,
 }: AddFieldFormProps) {
   const isEditing = !!editingField;
-  const canMoveUp = isEditing && editingField.index > 0;
-  const canMoveDown = isEditing && editingField.index < (totalFields ?? 0) - 1;
 
   const form = useAppForm({
     defaultValues: isEditing
@@ -82,72 +80,53 @@ export function AddFieldForm({
         e.preventDefault();
         form.handleSubmit();
       }}
-      className="min-w-md mb-4 p-6 space-y-2"
+      className="min-w-md mb-4 p-6 space-y-4"
     >
       <h3 className="font-medium">
         {isEditing ? "Edit Field" : "Add New Field"}
       </h3>
 
-      {/* Basic Field Info */}
-      <AddFieldLabel form={form} />
+      <Tabs defaultValue="basic" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="basic">Basic</TabsTrigger>
+          <TabsTrigger value="options">Options</TabsTrigger>
+          <TabsTrigger value="validation">Validation</TabsTrigger>
+        </TabsList>
 
-      {/* Field Type Selection */}
-      <AddFieldTypeSelector form={form} />
+        <TabsContent value="basic" className="space-y-4 mt-4">
+          {/* Basic Field Info */}
+          <AddFieldLabel form={form} />
 
-      {/* Optional Field Properties */}
-      <AddFieldOptions form={form} />
+          {/* Field Type Selection */}
+          <AddFieldTypeSelector form={form} />
+        </TabsContent>
 
-      {/* Validation */}
-      <AddFieldValidation form={form} />
+        <TabsContent value="options" className="space-y-4 mt-4">
+          {/* Optional Field Properties */}
+          <AddFieldOptions form={form} />
+        </TabsContent>
+
+        <TabsContent value="validation" className="space-y-4 mt-4">
+          {/* Validation */}
+          <AddFieldValidation form={form} />
+        </TabsContent>
+      </Tabs>
 
       {/* Field Actions - Only show when editing */}
       {isEditing && (
-        <div className="mt-6 space-y-3 pt-4 border-t">
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={!canMoveUp}
-              onClick={() => onMoveFieldUp?.(editingField.index)}
-              className="flex-1 gap-2"
-            >
-              <ChevronUp className="size-4" />
-              Move Up
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={!canMoveDown}
-              onClick={() => onMoveFieldDown?.(editingField.index)}
-              className="flex-1 gap-2"
-            >
-              <ChevronDown className="size-4" />
-              Move Down
-            </Button>
-          </div>
-          <Button
-            type="button"
-            variant="destructive"
-            size="sm"
-            onClick={() => {
-              onDeleteField?.(editingField.index);
-              onCancel?.();
-            }}
-            className="w-full gap-2"
-          >
-            <Trash2 className="size-4" />
-            Delete Field
-          </Button>
-          <FieldSeparator />
-        </div>
+        <EditFieldActions
+          index={editingField.index}
+          totalFields={totalFields}
+          onMoveUp={() => onMoveFieldUp?.(editingField.index)}
+          onMoveDown={() => onMoveFieldDown?.(editingField.index)}
+          onDelete={() => {
+            onDeleteField?.(editingField.index);
+            onCancel?.();
+          }}
+        />
       )}
 
       <div className="flex gap-2 mt-6">
-        <Button type="submit" className="flex-1">
-          {isEditing ? "Update Field" : "Add Field"}
-        </Button>
         {isEditing && (
           <Button
             type="button"
@@ -161,6 +140,9 @@ export function AddFieldForm({
             Cancel
           </Button>
         )}
+        <Button type="submit" className="flex-1">
+          {isEditing ? "Update Field" : "Add Field"}
+        </Button>
       </div>
     </form>
   );
