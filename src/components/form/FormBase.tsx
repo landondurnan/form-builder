@@ -51,8 +51,12 @@ export function FormBase({
   );
 
   // Use external error from form-level validation if provided, otherwise extract from field
+  const errorObj = field.state.meta.errors?.[0];
   const errorMessage =
-    externalError || (field.state.meta.errors?.[0] as string);
+    externalError ||
+    (typeof errorObj === "string"
+      ? errorObj
+      : (errorObj as { message: string })?.message);
 
   const errorElem = isInvalid && errorMessage && (
     <FieldError errors={[{ message: errorMessage }]} />
