@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useAppForm } from "../form/hooks";
-import type { FormField } from "../../lib/types";
 import { buildFieldSchema } from "../../lib/formUtils";
 import { FieldGroup } from "../ui/field";
 import { Button } from "../ui/button";
@@ -11,18 +10,11 @@ import { FormTextarea } from "../form/FormTextarea";
 import { FormSelect } from "../form/FormSelect";
 import { FormCheckbox } from "../form/FormCheckbox";
 import { FormRadio } from "../form/FormRadio";
-
-const INPUT_TYPES = ["text", "number", "date"];
-
-const FIELD_TYPE_COMPONENT_MAP = {
-  text: "Input",
-  number: "Input",
-  date: "Input",
-  textarea: "Textarea",
-  select: "Select",
-  radio: "Radio",
-  checkbox: "Checkbox",
-} as const;
+import {
+  buildFieldProps,
+  FIELD_TYPE_COMPONENT_MAP,
+  getSelectOptions,
+} from "../../lib/fieldUtils";
 
 export function FormPreview() {
   const [submittedData, setSubmittedData] = useState<Record<
@@ -80,59 +72,6 @@ export function FormPreview() {
     );
   }
 
-  const buildFieldProps = (formField: FormField) => {
-    const isInputType = INPUT_TYPES.includes(formField.type);
-
-    const baseProps = {
-      label: formField.label,
-      ...(formField.placeholder && {
-        placeholder: formField.placeholder,
-      }),
-      ...(formField.description && {
-        description: formField.description,
-      }),
-      ...(formField.required && { required: formField.required }),
-      ...(formField.validation && { validation: formField.validation }),
-    };
-
-    if (isInputType) {
-      return { ...baseProps, type: formField.type };
-    }
-
-    // FormRadio expects options prop
-    if (formField.type === "radio" && formField.options) {
-      return {
-        ...baseProps,
-        options: formField.options.map((opt) => ({
-          value: opt,
-          label: opt,
-        })),
-      };
-    }
-
-    // FormCheckbox expects options prop when multiple checkboxes
-    if (formField.type === "checkbox" && formField.options) {
-      return {
-        ...baseProps,
-        options: formField.options.map((opt) => ({
-          value: opt,
-          label: opt,
-        })),
-      };
-    }
-
-    return baseProps;
-  };
-
-  const renderSelectOptions = (options: string[] | undefined) => {
-    if (!options) return null;
-    return options.map((option) => (
-      <SelectItem key={option} value={option}>
-        {option}
-      </SelectItem>
-    ));
-  };
-
   return (
     <div className="flex gap-4 p-8">
       {/* Form */}
@@ -185,7 +124,16 @@ export function FormPreview() {
                         case "Select":
                           return (
                             <FormSelect {...fieldProps}>
-                              {renderSelectOptions(formField.options)}
+                              {getSelectOptions(formField.options).map(
+                                (option) => (
+                                  <SelectItem
+                                    key={option.key}
+                                    value={option.value}
+                                  >
+                                    {option.label}
+                                  </SelectItem>
+                                )
+                              )}
                             </FormSelect>
                           );
                         case "Checkbox":

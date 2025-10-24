@@ -2,18 +2,11 @@ import { SelectItem } from "../ui/select";
 import { FieldGroup, FieldSeparator } from "../ui/field";
 import { FieldError } from "../ui/field";
 import type { FormField } from "../../lib/types";
-
-const INPUT_TYPES = ["text", "number", "date"];
-
-const FIELD_TYPE_COMPONENT_MAP = {
-  text: "Input",
-  number: "Input",
-  date: "Input",
-  textarea: "Textarea",
-  select: "Select",
-  radio: "Radio",
-  checkbox: "Checkbox",
-} as const;
+import {
+  buildFieldProps,
+  FIELD_TYPE_COMPONENT_MAP,
+  getSelectOptions,
+} from "../../lib/fieldUtils";
 
 interface FormBuilderFieldsProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,57 +20,6 @@ export function FormBuilderFields({
   fieldsError,
   onImportClick,
 }: FormBuilderFieldsProps) {
-  const buildFieldProps = (formField: FormField) => {
-    const isInputType = INPUT_TYPES.includes(formField.type);
-
-    const baseProps = {
-      label: formField.label,
-      ...(formField.placeholder && {
-        placeholder: formField.placeholder,
-      }),
-      ...(formField.description && {
-        description: formField.description,
-      }),
-      ...(formField.required && { required: formField.required }),
-      ...(formField.validation && { validation: formField.validation }),
-    };
-
-    if (isInputType) {
-      return { ...baseProps, type: formField.type };
-    }
-
-    if (formField.type === "radio" && formField.options) {
-      return {
-        ...baseProps,
-        options: formField.options.map((opt) => ({
-          value: opt,
-          label: opt,
-        })),
-      };
-    }
-
-    if (formField.type === "checkbox" && formField.options) {
-      return {
-        ...baseProps,
-        options: formField.options.map((opt) => ({
-          value: opt,
-          label: opt,
-        })),
-      };
-    }
-
-    return baseProps;
-  };
-
-  const renderSelectOptions = (options: string[] | undefined) => {
-    if (!options) return null;
-    return options.map((option) => (
-      <SelectItem key={option} value={option}>
-        {option}
-      </SelectItem>
-    ));
-  };
-
   return (
     <div className="p-4 border rounded-md mb-4">
       {/* Form Title */}
@@ -154,7 +96,16 @@ export function FormBuilderFields({
                               value={subField.state.value}
                             >
                               {formField.type === "select" &&
-                                renderSelectOptions(formField.options)}
+                                getSelectOptions(formField.options).map(
+                                  (option) => (
+                                    <SelectItem
+                                      key={option.key}
+                                      value={option.value}
+                                    >
+                                      {option.label}
+                                    </SelectItem>
+                                  )
+                                )}
                             </FieldComponent>
                           )}
                         </form.AppField>
