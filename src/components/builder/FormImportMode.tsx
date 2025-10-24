@@ -21,19 +21,33 @@ export function FormImportMode({
       $schema: "https://json-schema.org/draft/2020-12/schema",
       type: "object",
       properties: {
-        firstName: { type: "string", title: "First Name" },
-        lastName: { type: "string", title: "Last Name" },
+        firstName: {
+          type: "string",
+          title: "First Name",
+          minLength: 2,
+          maxLength: 50,
+        },
+        lastName: {
+          type: "string",
+          title: "Last Name",
+          minLength: 2,
+          maxLength: 50,
+        },
         email: {
           type: "string",
           title: "Email Address",
+          pattern: "email",
         },
         phone: {
           type: "string",
           title: "Phone Number",
+          pattern: "phone",
         },
         message: {
-          type: "string",
+          type: "textarea",
           title: "Message",
+          minLength: 10,
+          maxLength: 500,
         },
       },
       required: ["firstName", "lastName", "email"],
