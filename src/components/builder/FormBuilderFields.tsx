@@ -13,17 +13,21 @@ interface FormBuilderFieldsProps {
   form: any; // Using any due to FormApi complex generics
   fieldsError: string | null;
   onImportClick: () => void;
+  onEditField?: (index: number) => void;
+  editingFieldIndex?: number | null;
 }
 
 export function FormBuilderFields({
   form,
   fieldsError,
   onImportClick,
+  onEditField = () => {},
+  editingFieldIndex = null,
 }: FormBuilderFieldsProps) {
   return (
-    <div className="p-4 border rounded-md mb-4">
+    <div className="p-2 border rounded-md mb-4">
       {/* Form Title */}
-      <FieldGroup>
+      <FieldGroup className="p-2">
         <form.AppField
           name="title"
           validators={{
@@ -44,7 +48,7 @@ export function FormBuilderFields({
         </form.AppField>
       </FieldGroup>
 
-      <FieldSeparator className="my-2" />
+      <FieldSeparator className="my-2 mx-2" />
 
       {/* Form Fields */}
       <FieldGroup className="mb-6">
@@ -69,7 +73,7 @@ export function FormBuilderFields({
 
               {/* Render fields if any exist */}
               {arrayField.state.value.length > 0 && (
-                <div className="space-y-4">
+                <div className="space-y-1">
                   {arrayField.state.value.map(
                     (formField: FormField, index: number) => {
                       const componentName =
@@ -85,30 +89,44 @@ export function FormBuilderFields({
                       const fieldProps = buildFieldProps(formField);
 
                       return (
-                        <form.AppField
+                        <button
                           key={`${formField.id}-${index}`}
-                          name={`fields[${index}].defaultValue`}
+                          onClick={() => onEditField(index)}
+                          className={`group w-full px-2 py-2 text-left cursor-pointer transition-colors rounded-md ${
+                            editingFieldIndex === index
+                              ? "bg-blue-50/70 outline outline-blue-300"
+                              : "hover:bg-blue-50/50"
+                          }`}
+                          title="Click to edit this field"
+                          type="button"
                         >
-                          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                          {(subField: any) => (
-                            <FieldComponent
-                              {...fieldProps}
-                              value={subField.state.value}
+                          <div className="flex items-center justify-between gap-2">
+                            <form.AppField
+                              name={`fields[${index}].defaultValue`}
                             >
-                              {formField.type === "select" &&
-                                getSelectOptions(formField.options).map(
-                                  (option) => (
-                                    <SelectItem
-                                      key={option.key}
-                                      value={option.value}
-                                    >
-                                      {option.label}
-                                    </SelectItem>
-                                  )
-                                )}
-                            </FieldComponent>
-                          )}
-                        </form.AppField>
+                              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                              {(subField: any) => (
+                                <FieldComponent
+                                  {...fieldProps}
+                                  value={subField.state.value}
+                                  disabled={editingFieldIndex !== index}
+                                >
+                                  {formField.type === "select" &&
+                                    getSelectOptions(formField.options).map(
+                                      (option) => (
+                                        <SelectItem
+                                          key={option.key}
+                                          value={option.value}
+                                        >
+                                          {option.label}
+                                        </SelectItem>
+                                      )
+                                    )}
+                                </FieldComponent>
+                              )}
+                            </form.AppField>
+                          </div>
+                        </button>
                       );
                     }
                   )}

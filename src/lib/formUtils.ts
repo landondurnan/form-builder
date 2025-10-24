@@ -215,7 +215,10 @@ export const shouldUseOptionsForDefault = (type: FieldType): boolean => {
  * Build a FormField from validated form data
  * This is the core logic for creating a new field from the add field form
  */
-export const buildFormField = (validatedData: AddFieldFormData): FormField => {
+export const buildFormField = (
+  validatedData: AddFieldFormData,
+  fieldId?: string
+): FormField => {
   // Build validation object, only including non-empty values
   const validationRules: ValidationRules = {};
   if (validatedData.validation?.minLength) {
@@ -247,7 +250,7 @@ export const buildFormField = (validatedData: AddFieldFormData): FormField => {
   }
 
   const newField: FormField = {
-    id: generateId(),
+    id: fieldId || generateId(),
     label: validatedData.label,
     name: labelToFieldName(validatedData.label),
     type: validatedData.type as FieldType,
@@ -271,6 +274,29 @@ export const buildFormField = (validatedData: AddFieldFormData): FormField => {
   };
 
   return newField;
+};
+
+/**
+ * Convert a FormField back to AddFieldFormData for editing
+ */
+export const fieldToFormData = (field: FormField): AddFieldFormData => {
+  return {
+    label: field.label,
+    type: field.type,
+    placeholder: field.placeholder || "",
+    description: field.description || "",
+    required: field.required || false,
+    defaultValue: field.defaultValue ? String(field.defaultValue) : "",
+    options: field.options ? field.options.join("\n") : "",
+    validation: {
+      minLength: field.validation?.minLength || "",
+      maxLength: field.validation?.maxLength || "",
+      min: field.validation?.min ? String(field.validation.min) : "",
+      max: field.validation?.max ? String(field.validation.max) : "",
+      pattern: field.validation?.pattern,
+      customPattern: field.validation?.customPattern || "",
+    },
+  };
 };
 
 /**

@@ -18,6 +18,10 @@ export function Builder() {
   const [builderMode, setBuilderMode] = useState<
     "builder" | "import" | "export"
   >("builder");
+  const [editingField, setEditingField] = useState<{
+    field: FormField;
+    index: number;
+  } | null>(null);
 
   const form = useAppForm({
     defaultValues: {
@@ -62,6 +66,75 @@ export function Builder() {
     },
     [form]
   );
+
+  const handleDeleteField = useCallback(
+    (index: number) => {
+      const updatedFields = form.state.values.fields.filter(
+        (_: FormField, i: number) => i !== index
+      );
+      form.setFieldValue("fields", updatedFields);
+
+      // Clear editing state when field is deleted
+      if (editingField && editingField.index === index) {
+        setEditingField(null);
+      }
+    },
+    [form, editingField]
+  );
+
+  const handleMoveFieldUp = useCallback(
+    (index: number) => {
+      if (index <= 0) return;
+
+      const fields = [...form.state.values.fields];
+      [fields[index - 1], fields[index]] = [fields[index], fields[index - 1]];
+      form.setFieldValue("fields", fields);
+
+      // Update editingField to track the moved field
+      if (editingField && editingField.index === index) {
+        setEditingField({ field: fields[index - 1], index: index - 1 });
+      }
+    },
+    [form, editingField]
+  );
+
+  const handleMoveFieldDown = useCallback(
+    (index: number) => {
+      if (index >= form.state.values.fields.length - 1) return;
+      const fields = [...form.state.values.fields];
+      [fields[index], fields[index + 1]] = [fields[index + 1], fields[index]];
+      form.setFieldValue("fields", fields);
+
+      // Update editingField to track the moved field
+      if (editingField && editingField.index === index) {
+        setEditingField({ field: fields[index + 1], index: index + 1 });
+      }
+    },
+    [form, editingField]
+  );
+
+  const handleEditField = useCallback(
+    (index: number) => {
+      const field = form.state.values.fields[index];
+      setEditingField({ field, index });
+    },
+    [form]
+  );
+
+  const handleUpdateField = useCallback(
+    (index: number, updatedField: FormField) => {
+      const updatedFields = form.state.values.fields.map((field, i) =>
+        i === index ? updatedField : field
+      );
+      form.setFieldValue("fields", updatedFields);
+      setEditingField(null);
+    },
+    [form]
+  );
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingField(null);
+  }, []);
 
   const handleResetForm = useCallback(() => {
     storageManager.clearForm();
@@ -170,6 +243,8 @@ export function Builder() {
                 form={form}
                 fieldsError={fieldsError}
                 onImportClick={() => handleModeToggle("import")}
+                onEditField={handleEditField}
+                editingFieldIndex={editingField?.index ?? null}
               />
             </form>
           )}
@@ -203,7 +278,16 @@ export function Builder() {
             : "opacity-0 pointer-events-none"
         }`}
       >
-        <AddFieldForm onAddField={handleAddField} />
+        <AddFieldForm
+          onAddField={handleAddField}
+          onUpdateField={handleUpdateField}
+          onCancel={handleCancelEdit}
+          onDeleteField={handleDeleteField}
+          onMoveFieldUp={handleMoveFieldUp}
+          onMoveFieldDown={handleMoveFieldDown}
+          editingField={editingField}
+          totalFields={form.state.values.fields.length}
+        />
       </div>
     </div>
   );
