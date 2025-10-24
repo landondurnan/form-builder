@@ -174,3 +174,56 @@ export function getFieldValidationJSONSchema(
 
   return schema;
 }
+
+/**
+ * Import a JSON Schema and convert it to form fields and title
+ * Maps JSON Schema types to form field types and extracts metadata
+ */
+export function importJSONSchema(jsonString: string): {
+  fields: FormField[];
+  title: string;
+} {
+  const parsed = JSON.parse(jsonString) as Record<string, unknown>;
+
+  // Validate it has the required structure
+  if (!parsed.properties || typeof parsed.properties !== "object") {
+    throw new Error("Invalid JSON Schema format: missing 'properties'");
+  }
+
+  // Extract title
+  const title = (parsed.title as string) || "Imported Form";
+
+  // Extract required fields list
+  const requiredFields = Array.isArray(parsed.required)
+    ? (parsed.required as string[])
+    : [];
+
+  // Map JSON Schema types to form field types
+  const typeMap: Record<string, FormField["type"]> = {
+    number: "number",
+    integer: "number",
+  };
+
+  // Extract fields from properties
+  const properties = parsed.properties as Record<
+    string,
+    Record<string, unknown>
+  >;
+
+  const fields: FormField[] = Object.entries(properties).map(
+    ([key, schema], index: number) => {
+      const schemaType = (schema.type as string) || "text";
+      const fieldType = typeMap[schemaType] || "text";
+
+      return {
+        id: `imported-${index}-${Date.now()}`,
+        name: key,
+        label: (schema.title as string) || key,
+        type: fieldType,
+        required: requiredFields.includes(key),
+      };
+    }
+  );
+
+  return { fields, title };
+}

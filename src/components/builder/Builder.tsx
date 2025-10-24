@@ -1,28 +1,23 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAppForm } from "../form/hooks";
 import type { FormField, FormDefinition } from "../../lib/types";
-import { FieldGroup, FieldSeparator } from "../ui/field";
 import { Button } from "../ui/button";
-import { SelectItem } from "../ui/select";
 import { AddFieldForm } from "./AddFieldForm";
+import { FormBuilderFields } from "./FormBuilderFields";
+import { FormImportMode } from "./FormImportMode";
+import { FormExportMode } from "./FormExportMode";
 import { storageManager } from "../../lib/storageUtils";
-import { FieldError } from "../ui/field";
-
-const INPUT_TYPES = ["text", "number", "date"];
-
-const FIELD_TYPE_COMPONENT_MAP = {
-  text: "Input",
-  number: "Input",
-  date: "Input",
-  textarea: "Textarea",
-  select: "Select",
-  radio: "Radio",
-  checkbox: "Checkbox",
-} as const;
+import { importJSONSchema } from "../../lib/schemaUtils";
+import { Toggle } from "../ui/toggle";
+import { FileUp, FileDown, SquarePen } from "lucide-react";
 
 export function Builder() {
   const [hasSavedForm, setHasSavedForm] = useState(false);
   const [fieldsError, setFieldsError] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [builderMode, setBuilderMode] = useState<
+    "builder" | "import" | "export"
+  >("builder");
 
   const form = useAppForm({
     defaultValues: {
@@ -75,164 +70,140 @@ export function Builder() {
     form.reset();
   }, [form]);
 
-  const buildFieldProps = (formField: FormField) => {
-    const isInputType = INPUT_TYPES.includes(formField.type);
+  const handleImportSchema = useCallback(
+    (jsonString: string) => {
+      try {
+        const { fields, title } = importJSONSchema(jsonString);
 
-    const baseProps = {
-      label: formField.label,
-      ...(formField.placeholder && {
-        placeholder: formField.placeholder,
-      }),
-      ...(formField.description && {
-        description: formField.description,
-      }),
-      ...(formField.required && { required: formField.required }),
-      ...(formField.validation && { validation: formField.validation }),
-    };
+        // Update form values - set fields first, then title
+        form.setFieldValue("fields", fields);
+        form.setFieldValue("title", title);
 
-    if (isInputType) {
-      return { ...baseProps, type: formField.type };
-    }
+        setImportError(null);
+        setFieldsError(null);
+        setBuilderMode("builder");
+      } catch (error) {
+        setImportError(
+          error instanceof Error ? error.message : "Failed to parse JSON"
+        );
+      }
+    },
+    [form]
+  );
 
-    // FormRadio expects options prop
-    if (formField.type === "radio" && formField.options) {
-      return {
-        ...baseProps,
-        options: formField.options.map((opt) => ({
-          value: opt,
-          label: opt,
-        })),
-      };
-    }
-
-    // FormCheckbox expects options prop when multiple checkboxes
-    if (formField.type === "checkbox" && formField.options) {
-      return {
-        ...baseProps,
-        options: formField.options.map((opt) => ({
-          value: opt,
-          label: opt,
-        })),
-      };
-    }
-
-    return baseProps;
-  };
-
-  const renderSelectOptions = (options: string[] | undefined) => {
-    if (!options) return null;
-    return options.map((option) => (
-      <SelectItem key={option} value={option}>
-        {option}
-      </SelectItem>
-    ));
-  };
+  const handleModeToggle = useCallback(
+    (mode: "import" | "export" | "builder") => {
+      setBuilderMode(mode);
+    },
+    []
+  );
 
   return (
     <div className="flex h-full">
       <div className="flex-1 p-4">
-        <form
-          noValidate
-          onSubmit={(e) => {
-            e.preventDefault();
-            form.handleSubmit();
-          }}
-        >
-          <div className="p-4 border rounded-md mb-4">
-            {/* Form Title */}
-            <FieldGroup>
-              <form.AppField
-                name="title"
-                validators={{
-                  onChange: ({ value }) => {
-                    if (!value || value.trim().length === 0) {
-                      return {
-                        message: "Form title is required",
-                      };
-                    }
-                    return undefined;
-                  },
-                }}
+        <div className="max-w-3xl mx-auto">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex space-x-2">
+              <Toggle
+                pressed={builderMode === "import"}
+                onPressedChange={() => handleModeToggle("import")}
+                className={`data-[state=on]:bg-accent data-[state=on]:border-2 data-[state=on]:border-slate-700 ${
+                  builderMode === "import" ? "text-slate-700" : ""
+                }`}
               >
-                {(field) => (
-                  <field.Input
-                    label="Title"
-                    placeholder="Untitled Form"
-                    required
-                  />
-                )}
-              </form.AppField>
-            </FieldGroup>
+                <FileDown />
+                Import
+              </Toggle>
+              {hasSavedForm && (
+                <Toggle
+                  pressed={builderMode === "export"}
+                  onPressedChange={() => handleModeToggle("export")}
+                  className={`data-[state=on]:bg-accent data-[state=on]:border-2 data-[state=on]:border-slate-700 ${
+                    builderMode === "export" ? "text-slate-700" : ""
+                  }`}
+                >
+                  <FileUp />
+                  Export
+                </Toggle>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Hide this toggle when already in builder mode */}
+              {builderMode !== "builder" && (
+                <Toggle
+                  pressed={false}
+                  onPressedChange={() => handleModeToggle("builder")}
+                  className="data-[state=on]:bg-accent data-[state=on]:border-2 data-[state=on]:border-slate-700"
+                >
+                  <SquarePen />
+                  Builder
+                </Toggle>
+              )}
+              {builderMode === "builder" && (
+                <>
+                  {hasSavedForm && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={handleResetForm}
+                    >
+                      Reset
+                    </Button>
+                  )}
+                  <Button type="button" onClick={() => form.handleSubmit()}>
+                    Save Form
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
 
-            <FieldSeparator className="my-2" />
+          {builderMode === "builder" && (
+            <form
+              noValidate
+              onSubmit={(e) => {
+                e.preventDefault();
+                form.handleSubmit();
+              }}
+            >
+              <FormBuilderFields
+                form={form}
+                fieldsError={fieldsError}
+                onImportClick={() => handleModeToggle("import")}
+              />
+            </form>
+          )}
 
-            {/* Empty state when no form fields */}
-            {form.state.values.fields.length === 0 && (
-              <p className="text-muted-foreground border border-dashed border-border p-4 rounded-md text-center">
-                No fields added yet. Start by adding a field.
-              </p>
+          {/* Builder/Import/Export Mode Toggle */}
+          {/* Builder/Import/Export Mode Content */}
+          <div className="mt-6 space-y-4">
+            {/* Export Mode */}
+            {builderMode === "export" && (
+              <FormExportMode
+                title={form.state.values.title}
+                fields={form.state.values.fields}
+              />
             )}
 
-            {/* Form Fields */}
-            <FieldGroup className="mb-6">
-              {fieldsError && <FieldError>{fieldsError}</FieldError>}
-              <form.AppField name="fields" mode="array">
-                {(arrayField) => (
-                  <div className="space-y-4">
-                    {arrayField.state.value.map((formField, index) => {
-                      const componentName =
-                        FIELD_TYPE_COMPONENT_MAP[formField.type];
-                      const FieldComponent = (
-                        arrayField as unknown as Record<
-                          string,
-                          React.ComponentType<Record<string, unknown>>
-                        >
-                      )[componentName];
-                      if (!FieldComponent) return null;
-
-                      const fieldProps = buildFieldProps(formField);
-
-                      return (
-                        <form.AppField
-                          key={`${formField.id}-${index}`}
-                          name={`fields[${index}].defaultValue`}
-                        >
-                          {(subField) => (
-                            <FieldComponent
-                              {...fieldProps}
-                              value={subField.state.value}
-                            >
-                              {formField.type === "select" &&
-                                renderSelectOptions(formField.options)}
-                            </FieldComponent>
-                          )}
-                        </form.AppField>
-                      );
-                    })}
-                  </div>
-                )}
-              </form.AppField>
-            </FieldGroup>
-          </div>
-          <div className="flex justify-between">
-            {hasSavedForm && (
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={handleResetForm}
-              >
-                Reset Form
-              </Button>
+            {/* Import Mode */}
+            {builderMode === "import" && (
+              <FormImportMode
+                importError={importError}
+                onImportSchema={handleImportSchema}
+              />
             )}
-            <Button type="submit" className="ml-auto">
-              Save Form
-            </Button>
           </div>
-        </form>
+        </div>
       </div>
 
-      {/* Add Field Form */}
-      <div className="bg-sidebar">
+      {/* Add Field Form - Disabled with opacity when not in builder mode */}
+      <div
+        className={`bg-sidebar transition-opacity duration-200 ${
+          builderMode === "builder"
+            ? "opacity-100"
+            : "opacity-0 pointer-events-none"
+        }`}
+      >
         <AddFieldForm onAddField={handleAddField} />
       </div>
     </div>
