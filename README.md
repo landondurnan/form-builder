@@ -196,6 +196,4 @@ For detailed insights into the project's architecture, design decisions, and pla
 ## Future Enhancements
 
 - Conditional field visibility (e.g., show "State" only if country === "US")
-- Mock submission with simulated latency and random success/failure
-- Field reordering UI
 - Field templates and presets

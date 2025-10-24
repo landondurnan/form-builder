@@ -75,6 +75,37 @@ Architecture considerations: Planned two distinct modes — Builder (for form de
 - [x] Added schema utilities for JSON export
 - [x] Separated builder (design) and preview (runtime validation) layers for clarity
 
+## October 24 — Day 3 · Field Management & Schema Export/Import
+
+### ✅ Field Lifecycle Management
+
+- [x] Implemented field editing in sidebar with AddFieldForm
+- [x] Added field reordering (move up/down) with index tracking
+- [x] Added field deletion with state cleanup
+- [x] Extracted EditFieldActions component for code organization
+- [x] Selection state properly tracks field movements and deletions
+
+### ✅ Schema Export/Import
+
+- [x] Rewrote `exportFormAsJSONSchema()` to manually build JSON Schema (removed Zod dependency from export)
+- [x] Fixed validation constraint mapping: `minLength`/`maxLength` for strings, `minimum`/`maximum` for numbers/dates
+- [x] Import function correctly extracts and reconstructs validation rules
+- [x] Forms can now export and reimport without data loss
+
+### ✅ Form Organization
+
+- [x] Reorganized AddFieldForm with tabbed interface (Basic | Options | Validation tabs)
+- [x] Improved sidebar UX by reducing cognitive load
+
+### ✅ Mock Submission System
+
+- [x] Implemented form submission with validation feedback
+- [x] Added submission status tracking (idle, loading, success, error)
+- [x] Implemented configurable latency simulation for realistic UX testing
+- [x] Implemented random failure simulation with configurable failure rate
+- [x] Display submitted data preview on successful submission
+- [x] Toast notifications for success/error feedback
+
 ## 🧾 Requirements Coverage
 
 ### ✅ Completed
@@ -82,23 +113,16 @@ Architecture considerations: Planned two distinct modes — Builder (for form de
 - [x] Field creation (add fields with basic properties)
 - [x] All field types (text, textarea, number, select, radio, checkbox, date)
 - [x] Validation system using Zod (required, min/max, regex)
+- [x] Remove, reorder, and edit fields
 - [x] LocalStorage persistence (save/load/reset)
 - [x] Builder and preview mode architecture
-- [x] JSON schema export foundation
+- [x] JSON schema export/import
+- [x] Mock submission with configurable latency and failure simulation
 - [x] Human-readable validation messages
-- [x] Write short documentation notes explaining architectural tradeoffs and next-phase plans
+- [x] Real-time form validation feedback
 
 ### ⚠️ Remaining / Deferred
 
-- [ ] Remove, reorder, and edit fields
-- [ ] Conditional visibility (e.g., show “State” if country = US)
-- [ ] Mock submission (latency + random success/failure)
+- [ ] Conditional visibility (e.g., show "State" if country = US)
 
-## 🧭 Next Steps & Prioritization
-
-Given time constraints and overall scope, next steps are being prioritized by demonstrating end-to-end flow and system completeness rather than 100% feature coverage:
-
-### Planned next:
-
-- [ ] Implement mock submission with success/failure handling to demonstrate validation + error states
-- [ ] Add one simple conditional visibility rule (hardcoded example) to show system extensibility
+Brainstorming conditional visibility we would need to add support in our schema definition and field metadata with a new option like `visibleIf`, our Tanstack form and Zod schema and would need to consider this constraint for rendering and validation.
