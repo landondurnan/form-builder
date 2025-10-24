@@ -75,9 +75,9 @@ export function Builder() {
       try {
         const { fields, title } = importJSONSchema(jsonString);
 
-        // Update form values - set fields first, then title
-        form.setFieldValue("fields", fields);
+        // Update form values
         form.setFieldValue("title", title);
+        form.setFieldValue("fields", fields);
 
         setImportError(null);
         setFieldsError(null);
@@ -174,7 +174,6 @@ export function Builder() {
             </form>
           )}
 
-          {/* Builder/Import/Export Mode Toggle */}
           {/* Builder/Import/Export Mode Content */}
           <div className="mt-6 space-y-4">
             {/* Export Mode */}
