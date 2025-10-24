@@ -1,6 +1,141 @@
-import type { ValidationRules } from "./types";
+import type { ValidationRules, FormField, FormDefinition } from "./types";
 import { z } from "zod";
-import { formFieldSchema, formSchema } from "./types";
+
+/**
+ * Build a Zod schema from a single form field definition
+ * This allows dynamic schema generation based on user-created fields
+ */
+export function buildFieldSchema(field: FormField): z.ZodTypeAny {
+  let schema: z.ZodTypeAny;
+
+  // Base schema by field type
+  switch (field.type) {
+    case "text":
+    case "textarea":
+      schema = z.string().catch("");
+      break;
+    case "number":
+      schema = z.coerce.number().catch(0);
+      break;
+    case "date":
+      schema = z.string().catch("");
+      break;
+    case "select":
+    case "radio":
+      schema = z.string().catch("");
+      break;
+    case "checkbox":
+      schema = z.boolean().catch(false);
+      break;
+    default:
+      schema = z.string().catch("");
+  }
+
+  // Apply validation rules
+  if (field.validation) {
+    const { minLength, maxLength, min, max, pattern, customPattern } =
+      field.validation;
+
+    if (field.type === "text" || field.type === "textarea") {
+      if (minLength !== undefined) {
+        schema = (schema as z.ZodString).min(minLength);
+      }
+      if (maxLength !== undefined) {
+        schema = (schema as z.ZodString).max(maxLength);
+      }
+      if (customPattern) {
+        schema = (schema as z.ZodString).regex(new RegExp(customPattern));
+      }
+    }
+
+    if (field.type === "number") {
+      if (min !== undefined) {
+        schema = (schema as z.ZodNumber).min(Number(min));
+      }
+      if (max !== undefined) {
+        schema = (schema as z.ZodNumber).max(Number(max));
+      }
+    }
+
+    if (field.type === "date") {
+      if (min !== undefined) {
+        schema = (schema as z.ZodString).min(Number(min));
+      }
+      if (max !== undefined) {
+        schema = (schema as z.ZodString).max(Number(max));
+      }
+    }
+
+    // Pattern validation for text fields
+    if (pattern && (field.type === "text" || field.type === "textarea")) {
+      const patterns: Record<string, RegExp> = {
+        email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        url: /^https?:\/\/.+/,
+        phone: /^\d{10}$/,
+        postal: /^\d{5}(?:-\d{4})?$/,
+        creditCard: /^\d{13,19}$/,
+      };
+      const patternRegex = patterns[pattern];
+      if (patternRegex) {
+        schema = (schema as z.ZodString).regex(patternRegex);
+      }
+    }
+  }
+
+  // Apply required/optional
+  if (!field.required) {
+    schema = schema.optional();
+  }
+
+  return schema;
+}
+
+/**
+ * Build a complete Zod schema from a form definition
+ * This creates a schema that validates form submission data
+ */
+export function buildFormSchema(
+  formDef: FormDefinition
+): z.ZodObject<Record<string, z.ZodTypeAny>> {
+  const shape: Record<string, z.ZodTypeAny> = {};
+
+  for (const field of formDef.fields) {
+    shape[field.name] = buildFieldSchema(field);
+  }
+
+  return z.object(shape);
+}
+
+/**
+ * Export only the validation schema (without form metadata like title)
+ * This is the portable, language-agnostic JSON Schema representation
+ * suitable for backend validation and API integration
+ */
+export function exportFormAsJSONSchema(
+  fields: FormField[]
+): Record<string, unknown> {
+  const shape: Record<string, z.ZodTypeAny> = {};
+
+  for (const field of fields) {
+    shape[field.name] = buildFieldSchema(field);
+  }
+
+  const zodSchema = z.object(shape);
+  return z.toJSONSchema(zodSchema);
+}
+
+/**
+ * Export the complete form definition (including title and fields)
+ * This is useful for importing/exporting the entire form configuration
+ */
+export function exportFormDefinition(
+  formDef: FormDefinition
+): Record<string, unknown> {
+  return {
+    title: formDef.title,
+    fields: formDef.fields,
+  };
+}
 
 /**
  * Convert form field validation rules to JSON Schema format
@@ -38,18 +173,4 @@ export function getFieldValidationJSONSchema(
   }
 
   return schema;
-}
-
-/**
- * Get the JSON Schema representation of the form field schema using Zod's toJSONSchema
- */
-export function getFormFieldSchema() {
-  return z.toJSONSchema(formFieldSchema);
-}
-
-/**
- * Get the JSON Schema representation of the entire form schema using Zod's toJSONSchema
- */
-export function getFormDefinitionSchema() {
-  return z.toJSONSchema(formSchema);
 }
