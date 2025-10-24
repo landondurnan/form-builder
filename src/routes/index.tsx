@@ -1,16 +1,14 @@
 import { Builder } from "@/components/builder/Builder";
+import { FormPreview } from "@/components/builder/FormPreview";
+import { useBuilderMode } from "@/context/useBuilderMode";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
-/** */
-
 function Index() {
-  return (
-    <main>
-      <Builder />
-    </main>
-  );
+  const { mode } = useBuilderMode();
+
+  return <main>{mode === "builder" ? <Builder /> : <FormPreview />}</main>;
 }
