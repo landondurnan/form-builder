@@ -280,31 +280,27 @@ export const buildFormField = (validatedData: AddFieldFormData): FormField => {
 export const buildFieldSchema = (field: FormField): z.ZodType => {
   let schema: z.ZodType;
 
-  // Type-specific base schemas
-  if (field.type === "number") {
-    schema = z.coerce.number();
-  } else if (field.type === "date") {
-    schema = z.coerce.date();
-  } else {
-    schema = z.string();
-  }
-
-  // Apply validation rules FIRST (before optional)
   const validation = field.validation;
 
   if (field.type === "text" || field.type === "textarea") {
-    let stringSchema = schema as z.ZodString;
+    // Start with a string schema that catches non-string values and treats as empty
+    // This gives us a human-friendly error message when required fields are empty
+    let stringSchema = z.string().catch(() => "");
 
     if (validation?.minLength) {
-      stringSchema = stringSchema.min(
-        validation.minLength,
-        `Must be at least ${validation.minLength} characters`
+      stringSchema = stringSchema.refine(
+        (val) => val.length >= validation.minLength!,
+        {
+          message: `Must be at least ${validation.minLength} characters`,
+        }
       );
     }
     if (validation?.maxLength) {
-      stringSchema = stringSchema.max(
-        validation.maxLength,
-        `Cannot exceed ${validation.maxLength} characters`
+      stringSchema = stringSchema.refine(
+        (val) => val.length <= validation.maxLength!,
+        {
+          message: `Cannot exceed ${validation.maxLength} characters`,
+        }
       );
     }
     if (validation?.pattern) {
@@ -315,16 +311,18 @@ export const buildFieldSchema = (field: FormField): z.ZodType => {
         pattern = PATTERN_DEFINITIONS[validation.pattern]?.pattern;
       }
       if (pattern) {
-        stringSchema = stringSchema.regex(
-          new RegExp(pattern),
-          `Invalid format for ${validation.pattern}`
+        stringSchema = stringSchema.refine(
+          (val) => new RegExp(pattern).test(val),
+          {
+            message: `Invalid format for ${validation.pattern}`,
+          }
         );
       }
     }
 
     schema = stringSchema;
   } else if (field.type === "number") {
-    let numberSchema = schema as z.ZodNumber;
+    let numberSchema = z.coerce.number();
 
     if (validation?.min !== undefined && validation.min !== "") {
       const minNum = Number(validation.min);
@@ -341,11 +339,9 @@ export const buildFieldSchema = (field: FormField): z.ZodType => {
 
     schema = numberSchema;
   } else if (field.type === "date") {
-    let dateSchema = schema as z.ZodDate;
+    let dateSchema = z.coerce.date();
 
     if (validation?.min !== undefined && validation.min !== "") {
-      // For date strings in yyyy-mm-dd format, we can compare them directly as strings
-      // since they naturally sort chronologically
       const minDate = new Date(validation.min);
       dateSchema = dateSchema.refine((val) => val >= minDate, {
         message: `Must be on or after ${validation.min}`,
@@ -359,15 +355,20 @@ export const buildFieldSchema = (field: FormField): z.ZodType => {
     }
 
     schema = dateSchema;
+  } else {
+    // For select, radio, checkbox
+    schema = z.string();
   }
 
   // Apply required constraint LAST
   if (field.required) {
     if (field.type === "text" || field.type === "textarea") {
-      schema = (schema as z.ZodString).min(1, `${field.label} is required`);
+      schema = (schema as z.ZodString).refine((val) => val.length > 0, {
+        message: `${field.label} is required`,
+      });
     } else if (field.type === "number") {
       schema = (schema as z.ZodNumber).refine(
-        (val) => val !== undefined && val !== null,
+        (val) => val !== undefined && val !== null && !isNaN(val),
         { message: `${field.label} is required` }
       );
     } else if (field.type === "date") {
@@ -375,10 +376,21 @@ export const buildFieldSchema = (field: FormField): z.ZodType => {
         (val) => val !== undefined && val !== null,
         { message: `${field.label} is required` }
       );
+    } else {
+      // select, radio, checkbox
+      schema = (schema as z.ZodString).refine((val) => val.length > 0, {
+        message: `${field.label} is required`,
+      });
     }
   } else {
     // For optional fields, make them nullable/optional
-    schema = schema.nullable().optional();
+    if (field.type === "number") {
+      schema = (schema as z.ZodNumber).nullable().optional();
+    } else if (field.type === "date") {
+      schema = (schema as z.ZodDate).nullable().optional();
+    } else {
+      schema = (schema as z.ZodString).nullable().optional();
+    }
   }
 
   return schema;
