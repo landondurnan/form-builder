@@ -1,12 +1,12 @@
-import { useCallback, useState } from "react";
-import { z } from "zod";
+import { useCallback, useEffect, useState } from "react";
 import { useAppForm } from "../form/hooks";
-import type { FormField } from "../../lib/types";
-import { buildFieldSchema } from "../../lib/formUtils";
+import type { FormField, FormDefinition } from "../../lib/types";
 import { FieldGroup, FieldSeparator } from "../ui/field";
 import { Button } from "../ui/button";
 import { SelectItem } from "../ui/select";
 import { AddFieldForm } from "./AddFieldForm";
+import { storageManager } from "../../lib/storageUtils";
+import { FieldError } from "../ui/field";
 
 const INPUT_TYPES = ["text", "number", "date"];
 
@@ -21,7 +21,8 @@ const FIELD_TYPE_COMPONENT_MAP = {
 } as const;
 
 export function Builder() {
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [hasSavedForm, setHasSavedForm] = useState(false);
+  const [fieldsError, setFieldsError] = useState<string | null>(null);
 
   const form = useAppForm({
     defaultValues: {
@@ -29,45 +30,50 @@ export function Builder() {
       fields: [] as FormField[],
     },
     onSubmit: async (values) => {
-      // Validate all fields on submit
-      const errors: Record<string, string> = {};
-
-      for (let index = 0; index < values.value.fields.length; index++) {
-        const field = values.value.fields[index];
-        const fieldValue = field.defaultValue;
-
-        try {
-          const fieldSchema = buildFieldSchema(field);
-          await fieldSchema.parseAsync(fieldValue);
-        } catch (err) {
-          if (err instanceof z.ZodError) {
-            const errorMessage = err.issues[0]?.message;
-            errors[`fields[${index}].defaultValue`] =
-              errorMessage || "Invalid value";
-          } else {
-            errors[`fields[${index}].defaultValue`] = "Invalid value";
-          }
-        }
-      }
-
-      // If there are errors, store them and don't submit
-      if (Object.keys(errors).length > 0) {
-        setFieldErrors(errors);
+      // Validate that at least one field exists
+      if (!values.value.fields || values.value.fields.length === 0) {
+        setFieldsError("Add at least one field to save the form");
         return;
       }
 
-      // Clear errors on successful submit
-      setFieldErrors({});
-      console.log("Form Submitted:", values.value);
+      // In builder mode, just save the form definition to localStorage without validation
+      const formData: FormDefinition = {
+        title: values.value.title,
+        fields: values.value.fields,
+      };
+
+      storageManager.saveForm(formData);
+      setHasSavedForm(true);
+      setFieldsError(null);
+
+      console.log("Form saved to localStorage:", formData);
     },
   });
+
+  // Load saved form data on component mount
+  useEffect(() => {
+    const savedForm = storageManager.getForm();
+    if (savedForm) {
+      form.setFieldValue("title", savedForm.title);
+      form.setFieldValue("fields", savedForm.fields);
+      setHasSavedForm(true);
+    }
+  }, [form]);
 
   const handleAddField = useCallback(
     (newField: FormField) => {
       form.setFieldValue("fields", [...form.state.values.fields, newField]);
+      setFieldsError(null);
     },
     [form]
   );
+
+  const handleResetForm = useCallback(() => {
+    storageManager.clearForm();
+    setHasSavedForm(false);
+    setFieldsError(null);
+    form.reset();
+  }, [form]);
 
   const buildFieldProps = (formField: FormField) => {
     const isInputType = INPUT_TYPES.includes(formField.type);
@@ -167,6 +173,7 @@ export function Builder() {
 
             {/* Form Fields */}
             <FieldGroup className="mb-6">
+              {fieldsError && <FieldError>{fieldsError}</FieldError>}
               <form.AppField name="fields" mode="array">
                 {(arrayField) => (
                   <div className="space-y-4">
@@ -192,9 +199,6 @@ export function Builder() {
                             <FieldComponent
                               {...fieldProps}
                               value={subField.state.value}
-                              externalError={
-                                fieldErrors[`fields[${index}].defaultValue`]
-                              }
                             >
                               {formField.type === "select" &&
                                 renderSelectOptions(formField.options)}
@@ -208,7 +212,20 @@ export function Builder() {
               </form.AppField>
             </FieldGroup>
           </div>
-          <Button type="submit">Save Form</Button>
+          <div className="flex justify-between">
+            {hasSavedForm && (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleResetForm}
+              >
+                Reset Form
+              </Button>
+            )}
+            <Button type="submit" className="ml-auto">
+              Save Form
+            </Button>
+          </div>
         </form>
       </div>
 
