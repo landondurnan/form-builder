@@ -129,13 +129,8 @@ export function Builder() {
   };
 
   return (
-    <div className="flex gap-4">
-      <div className="flex-1 p-8">
-        <h2 className="text-lg font-semibold">Form Builder</h2>
-        <p className="text-muted-foreground mb-6">
-          Build your own custom forms by adding and configuring fields below.
-        </p>
-
+    <div className="flex h-full">
+      <div className="flex-1 p-4">
         <form
           noValidate
           onSubmit={(e) => {
@@ -170,6 +165,13 @@ export function Builder() {
             </FieldGroup>
 
             <FieldSeparator className="my-2" />
+
+            {/* Empty state when no form fields */}
+            {form.state.values.fields.length === 0 && (
+              <p className="text-muted-foreground border border-dashed border-border p-4 rounded-md text-center">
+                No fields added yet. Start by adding a field.
+              </p>
+            )}
 
             {/* Form Fields */}
             <FieldGroup className="mb-6">

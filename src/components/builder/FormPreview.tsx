@@ -72,8 +72,8 @@ export function FormPreview() {
   // Show message if no form available
   if (!savedForm || !savedForm.fields || savedForm.fields.length === 0) {
     return (
-      <div className="p-8">
-        <p className="text-muted-foreground">
+      <div className="p-6">
+        <p className="text-muted-foreground border border-dashed border-border p-4 rounded-md text-center">
           No form available. Please build a form in builder mode first.
         </p>
       </div>
