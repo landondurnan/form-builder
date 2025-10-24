@@ -1,4 +1,9 @@
-import type { ValidationRules, FormField, FormDefinition } from "./types";
+import type {
+  ValidationRules,
+  FormField,
+  FormDefinition,
+  PatternType,
+} from "./types";
 import { z } from "zod";
 
 /**
@@ -215,13 +220,54 @@ export function importJSONSchema(jsonString: string): {
       const schemaType = (schema.type as string) || "text";
       const fieldType = typeMap[schemaType] || "text";
 
-      return {
+      // Extract validation rules from JSON Schema properties
+      const validation: ValidationRules = {};
+
+      if (typeof schema.minLength === "number") {
+        validation.minLength = schema.minLength;
+      }
+      if (typeof schema.maxLength === "number") {
+        validation.maxLength = schema.maxLength;
+      }
+      if (typeof schema.min === "number") {
+        validation.min = schema.min;
+      }
+      if (typeof schema.max === "number") {
+        validation.max = schema.max;
+      }
+      if (typeof schema.pattern === "string") {
+        // Check if it's a predefined pattern type
+        const validPatterns = [
+          "email",
+          "url",
+          "phone",
+          "postal",
+          "creditCard",
+          "custom",
+        ];
+        if (validPatterns.includes(schema.pattern)) {
+          validation.pattern = schema.pattern as PatternType;
+        } else {
+          // Treat as custom regex pattern
+          validation.pattern = "custom";
+          validation.customPattern = schema.pattern;
+        }
+      }
+
+      const field: FormField = {
         id: `imported-${index}-${Date.now()}`,
         name: key,
         label: (schema.title as string) || key,
         type: fieldType,
         required: requiredFields.includes(key),
       };
+
+      // Only add validation if there are rules
+      if (Object.keys(validation).length > 0) {
+        field.validation = validation;
+      }
+
+      return field;
     }
   );
 
