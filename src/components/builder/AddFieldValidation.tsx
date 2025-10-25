@@ -1,4 +1,4 @@
-import type { FieldType } from "../../lib/types";
+import type { FieldType } from "@/lib/types";
 import {
   Field,
   FieldContent,
@@ -6,16 +6,16 @@ import {
   FieldLegend,
   FieldSeparator,
   FieldSet,
-} from "../ui/field";
-import { Input } from "../ui/input";
-import { Toggle } from "../ui/toggle";
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Toggle } from "@/components/ui/toggle";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
+} from "@/components/ui/select";
 import {
   AsteriskIcon,
   Mail,
@@ -25,7 +25,7 @@ import {
   CreditCard,
   Regex,
 } from "lucide-react";
-import { VALIDATION_CONFIG, PATTERN_DEFINITIONS } from "../../lib/formUtils";
+import { VALIDATION_CONFIG, PATTERN_DEFINITIONS } from "@/lib/formUtils";
 import type { FormType, FieldState } from "./types";
 
 interface AddFieldValidationProps {

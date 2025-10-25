@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import { type BuilderMode } from "../lib/storageUtils";
+import { type BuilderMode } from "@/lib/storageUtils";
 
 export interface BuilderContextType {
   mode: BuilderMode;

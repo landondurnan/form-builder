@@ -1,4 +1,4 @@
-import type { FieldType } from "../../lib/types";
+import type { FieldType } from "@/lib/types";
 import {
   Field,
   FieldContent,
@@ -6,21 +6,21 @@ import {
   FieldLegend,
   FieldSeparator,
   FieldSet,
-} from "../ui/field";
-import { Input } from "../ui/input";
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
+} from "@/components/ui/select";
 import {
   DEFAULT_VALUE_INPUT_TYPES,
   shouldShowPlaceholder,
   shouldUseOptionsForDefault,
   parseOptionsFromTextarea,
-} from "../../lib/formUtils";
+} from "@/lib/formUtils";
 import type { FormType, FieldState } from "./types";
 
 interface AddFieldOptionsProps {

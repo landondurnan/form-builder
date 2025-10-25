@@ -1,13 +1,13 @@
 import type { ReactNode } from "react";
 import { useFieldContext } from "./hooks";
-import type { ValidationRules } from "../../lib/types";
+import type { ValidationRules } from "@/lib/types";
 import {
   Field,
   FieldContent,
   FieldDescription,
   FieldError,
   FieldLabel,
-} from "../ui/field";
+} from "@/components/ui/field";
 
 export type FormControlProps = {
   label: string;

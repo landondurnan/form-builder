@@ -1,25 +1,25 @@
 import { useState } from "react";
-import { useAppForm } from "../form/hooks";
-import { buildFieldSchema } from "../../lib/formUtils";
-import { FieldGroup } from "../ui/field";
-import { Button } from "../ui/button";
-import { SelectItem } from "../ui/select";
-import { storageManager } from "../../lib/storageUtils";
-import { FormInput } from "../form/FormInput";
-import { FormTextarea } from "../form/FormTextarea";
-import { FormSelect } from "../form/FormSelect";
-import { FormCheckbox } from "../form/FormCheckbox";
-import { FormRadio } from "../form/FormRadio";
+import { useAppForm } from "@/components/form/hooks";
+import { buildFieldSchema } from "@/lib/formUtils";
+import { FieldGroup } from "@/components/ui/field";
+import { Button } from "@/components/ui/button";
+import { SelectItem } from "@/components/ui/select";
+import { storageManager } from "@/lib/storageUtils";
+import { FormInput } from "@/components/form/FormInput";
+import { FormTextarea } from "@/components/form/FormTextarea";
+import { FormSelect } from "@/components/form/FormSelect";
+import { FormCheckbox } from "@/components/form/FormCheckbox";
+import { FormRadio } from "@/components/form/FormRadio";
 import {
   buildFieldProps,
   FIELD_TYPE_COMPONENT_MAP,
   getSelectOptions,
-} from "../../lib/fieldUtils";
+} from "@/lib/fieldUtils";
 import { toast } from "sonner";
-import { Checkbox } from "../ui/checkbox";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { FieldSeparator } from "../ui/field";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { FieldSeparator } from "@/components/ui/field";
 
 export function FormPreview() {
   const [status, setStatus] = useState<

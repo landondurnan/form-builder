@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
-import { useAppForm } from "../form/hooks";
-import type { FormField, FormDefinition } from "../../lib/types";
-import { Button } from "../ui/button";
+import { useAppForm } from "@/components/form/hooks";
+import type { FormField, FormDefinition } from "@/lib/types";
+import { Button } from "@/components/ui/button";
 import { AddFieldForm } from "./AddFieldForm";
 import { FormBuilderFields } from "./FormBuilderFields";
 import { FormImportMode } from "./FormImportMode";
 import { FormExportMode } from "./FormExportMode";
-import { storageManager } from "../../lib/storageUtils";
-import { importJSONSchema } from "../../lib/schemaUtils";
-import { Toggle } from "../ui/toggle";
+import { storageManager } from "@/lib/storageUtils";
+import { importJSONSchema } from "@/lib/schemaUtils";
+import { Toggle } from "@/components/ui/toggle";
 import { FileUp, FileDown, SquarePen } from "lucide-react";
 
 export function Builder() {

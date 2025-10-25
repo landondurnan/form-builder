@@ -1,8 +1,8 @@
 import { useCallback, useRef } from "react";
-import { Button } from "../ui/button";
-import { FieldError } from "../ui/field";
-import { Field, FieldLabel, FieldDescription } from "../ui/field";
-import { Textarea } from "../ui/textarea";
+import { Button } from "@/components/ui/button";
+import { FieldError } from "@/components/ui/field";
+import { Field, FieldLabel, FieldDescription } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
 
 interface FormImportModeProps {
   importError: string | null;

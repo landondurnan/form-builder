@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react";
-import { Button } from "../ui/button";
-import { exportFormAsJSONSchema } from "../../lib/schemaUtils";
-import type { FormField } from "../../lib/types";
+import { Button } from "@/components/ui/button";
+import { exportFormAsJSONSchema } from "@/lib/schemaUtils";
+import type { FormField } from "@/lib/types";
 
 interface FormExportModeProps {
   title: string;

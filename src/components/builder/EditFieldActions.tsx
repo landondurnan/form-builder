@@ -1,6 +1,6 @@
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
 import { Trash2, ChevronUp, ChevronDown } from "lucide-react";
-import { FieldSeparator } from "../ui/field";
+import { FieldSeparator } from "@/components/ui/field";
 
 interface EditFieldActionsProps {
   index: number;

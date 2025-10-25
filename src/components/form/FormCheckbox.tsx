@@ -1,6 +1,6 @@
 import { useFieldContext } from "./hooks";
 import { FormBase, type FormControlProps } from "./FormBase";
-import { Checkbox } from "../ui/checkbox";
+import { Checkbox } from "@/components/ui/checkbox";
 import { FormCheckboxGroup } from "./FormCheckboxGroup";
 
 interface CheckboxOption {

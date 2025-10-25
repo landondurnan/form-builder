@@ -1,5 +1,5 @@
 import { useBuilderMode } from "@/context/useBuilderMode";
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
 
 export function ModeToggle() {
   const { mode, setMode } = useBuilderMode();

@@ -1,15 +1,15 @@
-import { Field, FieldContent, FieldLabel } from "../ui/field";
-import { Textarea } from "../ui/textarea";
+import { Field, FieldContent, FieldLabel } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
+} from "@/components/ui/select";
 import { Asterisk } from "lucide-react";
-import { FIELD_TYPES, shouldShowOptionsField } from "../../lib/formUtils";
-import type { FieldType } from "../../lib/types";
+import { FIELD_TYPES, shouldShowOptionsField } from "@/lib/formUtils";
+import type { FieldType } from "@/lib/types";
 import type { FormType, FieldState } from "./types";
 
 interface AddFieldTypeSelectorProps {

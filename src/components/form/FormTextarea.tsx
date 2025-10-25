@@ -1,7 +1,7 @@
-import { Textarea } from "../ui/textarea";
+import { Textarea } from "@/components/ui/textarea";
 import { FormBase, type FormControlProps } from "./FormBase";
 import { useFieldContext } from "./hooks";
-import { getValidationErrorMessage } from "../../lib/utils";
+import { getValidationErrorMessage } from "@/lib/utils";
 
 export function FormTextarea(props: FormControlProps) {
   const field = useFieldContext<string>();

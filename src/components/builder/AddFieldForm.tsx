@@ -1,6 +1,6 @@
-import type { FormField } from "../../lib/types";
-import { useAppForm } from "../form/hooks";
-import { Button } from "../ui/button";
+import type { FormField } from "@/lib/types";
+import { useAppForm } from "@/components/form/hooks";
+import { Button } from "@/components/ui/button";
 import { AddFieldLabel } from "./AddFieldLabel";
 import { AddFieldTypeSelector } from "./AddFieldTypeSelector";
 import { AddFieldOptions } from "./AddFieldOptions";
@@ -9,9 +9,9 @@ import {
   addFieldSchema,
   buildFormField,
   fieldToFormData,
-} from "../../lib/formUtils";
+} from "@/lib/formUtils";
 import { EditFieldActions } from "./EditFieldActions";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface AddFieldFormProps {
   onAddField: (field: FormField) => void;

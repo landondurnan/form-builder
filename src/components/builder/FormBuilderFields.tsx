@@ -1,12 +1,12 @@
-import { SelectItem } from "../ui/select";
-import { FieldGroup, FieldSeparator } from "../ui/field";
-import { FieldError } from "../ui/field";
-import type { FormField } from "../../lib/types";
+import { SelectItem } from "@/components/ui/select";
+import { FieldGroup, FieldSeparator } from "@/components/ui/field";
+import { FieldError } from "@/components/ui/field";
+import type { FormField } from "@/lib/types";
 import {
   buildFieldProps,
   FIELD_TYPE_COMPONENT_MAP,
   getSelectOptions,
-} from "../../lib/fieldUtils";
+} from "@/lib/fieldUtils";
 
 interface FormBuilderFieldsProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

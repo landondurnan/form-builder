@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { storageManager, type BuilderMode } from "../lib/storageUtils";
+import { storageManager, type BuilderMode } from "@/lib/storageUtils";
 import { BuilderContext } from "./BuilderContextConfig";
 
 export function BuilderProvider({ children }: { children: ReactNode }) {
