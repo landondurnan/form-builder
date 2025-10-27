@@ -18,6 +18,7 @@ export type FormControlProps = {
   options?: { label: string; value: string }[];
   required?: boolean;
   validation?: ValidationRules;
+  readOnly?: boolean;
 };
 
 type FormBaseProps = FormControlProps & {

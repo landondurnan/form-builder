@@ -110,6 +110,7 @@ export function FormBuilderFields({
                                   {...fieldProps}
                                   value={subField.state.value}
                                   disabled={editingFieldIndex !== index}
+                                  readOnly
                                 >
                                   {formField.type === "select" &&
                                     getSelectOptions(formField.options).map(

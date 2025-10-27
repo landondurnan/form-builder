@@ -42,6 +42,8 @@ export function FormInput(props: FormControlProps) {
         onChange={(e) => field.handleChange(e.target.value)}
         aria-invalid={isInvalid}
         placeholder={props.placeholder}
+        readOnly={props.readOnly || false}
+        tabIndex={props.readOnly ? -1 : 0}
       />
     </FormBase>
   );
