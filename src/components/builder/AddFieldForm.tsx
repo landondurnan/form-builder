@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { FormField } from "@/lib/types";
 import { useAppForm } from "@/components/form/hooks";
 import { Button } from "@/components/ui/button";
@@ -73,6 +74,16 @@ export function AddFieldForm({
       form.reset();
     },
   });
+
+  // Reset form when editing different fields or switching between edit and add mode
+  useEffect(() => {
+    if (isEditing) {
+      const fieldData = fieldToFormData(editingField.field);
+      form.reset(fieldData);
+    } else {
+      form.reset();
+    }
+  }, [editingField, isEditing, form]);
 
   return (
     <form
