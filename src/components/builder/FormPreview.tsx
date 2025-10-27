@@ -128,7 +128,7 @@ export function FormPreview() {
                     key={`${formField.id}-${index}`}
                     name={`responses.${formField.name}`}
                     validators={{
-                      onChange: ({ value }) => {
+                      onBlur: ({ value }) => {
                         try {
                           const fieldSchema = buildFieldSchema(formField);
                           const result = fieldSchema.safeParse(value);

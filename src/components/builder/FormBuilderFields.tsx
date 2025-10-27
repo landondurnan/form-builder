@@ -31,7 +31,7 @@ export function FormBuilderFields({
         <form.AppField
           name="title"
           validators={{
-            onChange: ({ value }: { value: string }) => {
+            onBlur: ({ value }: { value: string }) => {
               if (!value || value.trim().length === 0) {
                 return {
                   message: "Form title is required",
