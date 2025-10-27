@@ -1,6 +1,6 @@
 import { Builder } from "@/components/builder/Builder";
 import { FormPreview } from "@/components/builder/FormPreview";
-import { useBuilderMode } from "@/context/useBuilderMode";
+import { useBuilderContext } from "@/context/BuilderContextConfig";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
@@ -8,7 +8,9 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { mode } = useBuilderMode();
+  const { state } = useBuilderContext();
 
-  return <>{mode === "builder" ? <Builder /> : <FormPreview />}</>;
+  // Show preview only if mode is exactly "preview", otherwise show builder
+  // (builder can have internal modes: "builder", "import", "export")
+  return <>{state.mode === "preview" ? <FormPreview /> : <Builder />}</>;
 }

@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { useAppForm } from "@/components/form/hooks";
-import type { FormField, FormDefinition } from "@/lib/types";
+import type { FormDefinition, FormField } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { AddFieldForm } from "./AddFieldForm";
 import { FormBuilderFields } from "./FormBuilderFields";
@@ -10,28 +10,23 @@ import { storageManager } from "@/lib/storageUtils";
 import { importJSONSchema } from "@/lib/schemaUtils";
 import { Toggle } from "@/components/ui/toggle";
 import { FileUp, FileDown, SquarePen } from "lucide-react";
+import { useBuilderContext } from "@/context/BuilderContextConfig";
 
 export function Builder() {
-  const [hasSavedForm, setHasSavedForm] = useState(false);
-  const [fieldsError, setFieldsError] = useState<string | null>(null);
-  const [importError, setImportError] = useState<string | null>(null);
-  const [builderMode, setBuilderMode] = useState<
-    "builder" | "import" | "export"
-  >("builder");
-  const [editingField, setEditingField] = useState<{
-    field: FormField;
-    index: number;
-  } | null>(null);
+  const { state, dispatch } = useBuilderContext();
 
   const form = useAppForm({
     defaultValues: {
-      title: "",
-      fields: [] as FormField[],
+      title: state.title,
+      fields: state.fields,
     },
     onSubmit: async (values) => {
       // Validate that at least one field exists
       if (!values.value.fields || values.value.fields.length === 0) {
-        setFieldsError("Add at least one field to save the form");
+        dispatch({
+          type: "SET_FIELDS_ERROR",
+          payload: "Add at least one field to save the form",
+        });
         return;
       }
 
@@ -42,133 +37,101 @@ export function Builder() {
       };
 
       storageManager.saveForm(formData);
-      setHasSavedForm(true);
-      setFieldsError(null);
+      dispatch({ type: "SET_SAVED_FORM", payload: true });
+      dispatch({ type: "SET_FIELDS_ERROR", payload: null });
 
       console.log("Form saved to localStorage:", formData);
     },
   });
 
-  // Load saved form data on component mount
+  // Sync form state with context state
   useEffect(() => {
-    const savedForm = storageManager.getForm();
-    if (savedForm) {
-      form.setFieldValue("title", savedForm.title);
-      form.setFieldValue("fields", savedForm.fields);
-      setHasSavedForm(true);
-    }
-  }, [form]);
+    form.setFieldValue("title", state.title);
+    form.setFieldValue("fields", state.fields);
+  }, [state.title, state.fields, form]);
 
   const handleAddField = useCallback(
     (newField: FormField) => {
-      form.setFieldValue("fields", [...form.state.values.fields, newField]);
-      setFieldsError(null);
+      dispatch({ type: "ADD_FIELD", payload: newField });
+      form.setFieldValue("fields", [...state.fields, newField]);
     },
-    [form]
+    [dispatch, state.fields, form]
   );
 
   const handleDeleteField = useCallback(
     (index: number) => {
-      const updatedFields = form.state.values.fields.filter(
-        (_: FormField, i: number) => i !== index
-      );
-      form.setFieldValue("fields", updatedFields);
-
-      // Clear editing state when field is deleted
-      if (editingField && editingField.index === index) {
-        setEditingField(null);
-      }
+      dispatch({ type: "DELETE_FIELD", payload: index });
     },
-    [form, editingField]
+    [dispatch]
   );
 
   const handleMoveFieldUp = useCallback(
     (index: number) => {
-      if (index <= 0) return;
-
-      const fields = [...form.state.values.fields];
-      [fields[index - 1], fields[index]] = [fields[index], fields[index - 1]];
-      form.setFieldValue("fields", fields);
-
-      // Update editingField to track the moved field
-      if (editingField && editingField.index === index) {
-        setEditingField({ field: fields[index - 1], index: index - 1 });
-      }
+      dispatch({ type: "MOVE_FIELD_UP", payload: index });
     },
-    [form, editingField]
+    [dispatch]
   );
 
   const handleMoveFieldDown = useCallback(
     (index: number) => {
-      if (index >= form.state.values.fields.length - 1) return;
-      const fields = [...form.state.values.fields];
-      [fields[index], fields[index + 1]] = [fields[index + 1], fields[index]];
-      form.setFieldValue("fields", fields);
-
-      // Update editingField to track the moved field
-      if (editingField && editingField.index === index) {
-        setEditingField({ field: fields[index + 1], index: index + 1 });
-      }
+      dispatch({ type: "MOVE_FIELD_DOWN", payload: index });
     },
-    [form, editingField]
+    [dispatch]
   );
 
   const handleEditField = useCallback(
     (index: number) => {
-      const field = form.state.values.fields[index];
-      setEditingField({ field, index });
+      dispatch({ type: "START_EDIT", payload: index });
     },
-    [form]
+    [dispatch]
   );
 
   const handleUpdateField = useCallback(
     (index: number, updatedField: FormField) => {
-      const updatedFields = form.state.values.fields.map((field, i) =>
-        i === index ? updatedField : field
-      );
-      form.setFieldValue("fields", updatedFields);
-      setEditingField(null);
+      dispatch({
+        type: "UPDATE_FIELD",
+        payload: { index, field: updatedField },
+      });
     },
-    [form]
+    [dispatch]
   );
 
   const handleCancelEdit = useCallback(() => {
-    setEditingField(null);
-  }, []);
+    dispatch({ type: "CANCEL_EDIT" });
+  }, [dispatch]);
 
   const handleResetForm = useCallback(() => {
     storageManager.clearForm();
-    setHasSavedForm(false);
-    setFieldsError(null);
+    dispatch({ type: "RESET_FORM" });
     form.reset();
-  }, [form]);
+  }, [dispatch, form]);
 
   const handleImportSchema = useCallback(
     (jsonString: string) => {
       try {
         const { fields, title } = importJSONSchema(jsonString);
 
-        // Update form values
-        form.setFieldValue("title", title);
-        form.setFieldValue("fields", fields);
-
-        setImportError(null);
-        setFieldsError(null);
-        setBuilderMode("builder");
+        dispatch({ type: "SET_TITLE", payload: title });
+        dispatch({ type: "SET_FIELDS", payload: fields });
+        dispatch({ type: "SET_IMPORT_ERROR", payload: null });
+        dispatch({ type: "SET_FIELDS_ERROR", payload: null });
+        dispatch({ type: "SET_MODE", payload: "builder" });
       } catch (error) {
-        setImportError(
-          error instanceof Error ? error.message : "Failed to parse JSON"
-        );
+        dispatch({
+          type: "SET_IMPORT_ERROR",
+          payload:
+            error instanceof Error ? error.message : "Failed to parse JSON",
+        });
       }
     },
-    [form]
+    [dispatch]
   );
 
   const handleModeToggle = useCallback(
     (mode: "import" | "export" | "builder") => {
-      setBuilderMode(mode);
+      dispatch({ type: "SET_MODE", payload: mode });
     },
-    []
+    [dispatch]
   );
 
   return (
@@ -178,21 +141,21 @@ export function Builder() {
           <div className="flex justify-between items-center mb-4">
             <div className="flex space-x-2">
               <Toggle
-                pressed={builderMode === "import"}
+                pressed={state.mode === "import"}
                 onPressedChange={() => handleModeToggle("import")}
                 className={`data-[state=on]:bg-accent data-[state=on]:border-2 data-[state=on]:border-slate-700 ${
-                  builderMode === "import" ? "text-slate-700" : ""
+                  state.mode === "import" ? "text-slate-700" : ""
                 }`}
               >
                 <FileDown />
                 Import
               </Toggle>
-              {hasSavedForm && (
+              {state.hasSavedForm && (
                 <Toggle
-                  pressed={builderMode === "export"}
+                  pressed={state.mode === "export"}
                   onPressedChange={() => handleModeToggle("export")}
                   className={`data-[state=on]:bg-accent data-[state=on]:border-2 data-[state=on]:border-slate-700 ${
-                    builderMode === "export" ? "text-slate-700" : ""
+                    state.mode === "export" ? "text-slate-700" : ""
                   }`}
                 >
                   <FileUp />
@@ -202,7 +165,7 @@ export function Builder() {
             </div>
             <div className="flex items-center gap-2">
               {/* Hide this toggle when already in builder mode */}
-              {builderMode !== "builder" && (
+              {state.mode !== "builder" && (
                 <Toggle
                   pressed={false}
                   onPressedChange={() => handleModeToggle("builder")}
@@ -212,9 +175,9 @@ export function Builder() {
                   Builder
                 </Toggle>
               )}
-              {builderMode === "builder" && (
+              {state.mode === "builder" && (
                 <>
-                  {hasSavedForm && (
+                  {state.hasSavedForm && (
                     <Button
                       type="button"
                       variant="secondary"
@@ -231,7 +194,7 @@ export function Builder() {
             </div>
           </div>
 
-          {builderMode === "builder" && (
+          {state.mode === "builder" && (
             <form
               noValidate
               onSubmit={(e) => {
@@ -241,10 +204,10 @@ export function Builder() {
             >
               <FormBuilderFields
                 form={form}
-                fieldsError={fieldsError}
+                fieldsError={state.errors.fieldsError}
                 onImportClick={() => handleModeToggle("import")}
                 onEditField={handleEditField}
-                editingFieldIndex={editingField?.index ?? null}
+                editingFieldIndex={state.editingField?.index ?? null}
               />
             </form>
           )}
@@ -252,17 +215,14 @@ export function Builder() {
           {/* Builder/Import/Export Mode Content */}
           <div className="mt-6 space-y-4">
             {/* Export Mode */}
-            {builderMode === "export" && (
-              <FormExportMode
-                title={form.state.values.title}
-                fields={form.state.values.fields}
-              />
+            {state.mode === "export" && (
+              <FormExportMode title={state.title} fields={state.fields} />
             )}
 
             {/* Import Mode */}
-            {builderMode === "import" && (
+            {state.mode === "import" && (
               <FormImportMode
-                importError={importError}
+                importError={state.errors.importError}
                 onImportSchema={handleImportSchema}
               />
             )}
@@ -273,7 +233,7 @@ export function Builder() {
       {/* Add Field Form - Disabled with opacity when not in builder mode */}
       <div
         className={`bg-sidebar transition-opacity duration-200 ${
-          builderMode === "builder"
+          state.mode === "builder"
             ? "opacity-100"
             : "opacity-0 pointer-events-none"
         }`}
@@ -285,8 +245,8 @@ export function Builder() {
           onDeleteField={handleDeleteField}
           onMoveFieldUp={handleMoveFieldUp}
           onMoveFieldDown={handleMoveFieldDown}
-          editingField={editingField}
-          totalFields={form.state.values.fields.length}
+          editingField={state.editingField}
+          totalFields={state.fields.length}
         />
       </div>
     </div>
