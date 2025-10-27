@@ -14,7 +14,6 @@ import { useBuilderContext } from "@/context/BuilderContextConfig";
 
 export function Builder() {
   const { state, dispatch } = useBuilderContext();
-
   const form = useAppForm({
     defaultValues: {
       title: state.title,
@@ -58,47 +57,32 @@ export function Builder() {
     [dispatch, state.fields, form]
   );
 
-  const handleDeleteField = useCallback(
-    (index: number) => {
-      dispatch({ type: "DELETE_FIELD", payload: index });
-    },
-    [dispatch]
-  );
+  const handleDeleteField = (index: number) => {
+    dispatch({ type: "DELETE_FIELD", payload: index });
+  };
 
-  const handleMoveFieldUp = useCallback(
-    (index: number) => {
-      dispatch({ type: "MOVE_FIELD_UP", payload: index });
-    },
-    [dispatch]
-  );
+  const handleMoveFieldUp = (index: number) => {
+    dispatch({ type: "MOVE_FIELD_UP", payload: index });
+  };
 
-  const handleMoveFieldDown = useCallback(
-    (index: number) => {
-      dispatch({ type: "MOVE_FIELD_DOWN", payload: index });
-    },
-    [dispatch]
-  );
+  const handleMoveFieldDown = (index: number) => {
+    dispatch({ type: "MOVE_FIELD_DOWN", payload: index });
+  };
 
-  const handleEditField = useCallback(
-    (index: number) => {
-      dispatch({ type: "START_EDIT", payload: index });
-    },
-    [dispatch]
-  );
+  const handleEditField = (index: number) => {
+    dispatch({ type: "START_EDIT", payload: index });
+  };
 
-  const handleUpdateField = useCallback(
-    (index: number, updatedField: FormField) => {
-      dispatch({
-        type: "UPDATE_FIELD",
-        payload: { index, field: updatedField },
-      });
-    },
-    [dispatch]
-  );
+  const handleUpdateField = (index: number, updatedField: FormField) => {
+    dispatch({
+      type: "UPDATE_FIELD",
+      payload: { index, field: updatedField },
+    });
+  };
 
-  const handleCancelEdit = useCallback(() => {
+  const handleCancelEdit = () => {
     dispatch({ type: "CANCEL_EDIT" });
-  }, [dispatch]);
+  };
 
   const handleResetForm = useCallback(() => {
     storageManager.clearForm();
@@ -106,33 +90,27 @@ export function Builder() {
     form.reset();
   }, [dispatch, form]);
 
-  const handleImportSchema = useCallback(
-    (jsonString: string) => {
-      try {
-        const { fields, title } = importJSONSchema(jsonString);
+  const handleImportSchema = (jsonString: string) => {
+    try {
+      const { fields, title } = importJSONSchema(jsonString);
 
-        dispatch({ type: "SET_TITLE", payload: title });
-        dispatch({ type: "SET_FIELDS", payload: fields });
-        dispatch({ type: "SET_IMPORT_ERROR", payload: null });
-        dispatch({ type: "SET_FIELDS_ERROR", payload: null });
-        dispatch({ type: "SET_MODE", payload: "builder" });
-      } catch (error) {
-        dispatch({
-          type: "SET_IMPORT_ERROR",
-          payload:
-            error instanceof Error ? error.message : "Failed to parse JSON",
-        });
-      }
-    },
-    [dispatch]
-  );
+      dispatch({ type: "SET_TITLE", payload: title });
+      dispatch({ type: "SET_FIELDS", payload: fields });
+      dispatch({ type: "SET_IMPORT_ERROR", payload: null });
+      dispatch({ type: "SET_FIELDS_ERROR", payload: null });
+      dispatch({ type: "SET_MODE", payload: "builder" });
+    } catch (error) {
+      dispatch({
+        type: "SET_IMPORT_ERROR",
+        payload:
+          error instanceof Error ? error.message : "Failed to parse JSON",
+      });
+    }
+  };
 
-  const handleModeToggle = useCallback(
-    (mode: "import" | "export" | "builder") => {
-      dispatch({ type: "SET_MODE", payload: mode });
-    },
-    [dispatch]
-  );
+  const handleModeToggle = (mode: "import" | "export" | "builder") => {
+    dispatch({ type: "SET_MODE", payload: mode });
+  };
 
   return (
     <div className="flex h-full">
