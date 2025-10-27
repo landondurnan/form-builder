@@ -94,7 +94,7 @@ export function FormBuilderFields({
                           onClick={() => onEditField(index)}
                           className={`group w-full px-2 py-2 text-left cursor-pointer transition-colors rounded-md ${
                             editingFieldIndex === index
-                              ? "bg-blue-50/70 outline outline-blue-300"
+                              ? "bg-blue-50/70 outline-2 outline-blue-300 outline-dashed"
                               : "hover:bg-blue-50/50"
                           }`}
                           title="Click to edit this field"
